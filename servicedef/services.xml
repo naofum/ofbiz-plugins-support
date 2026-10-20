@@ -200,4 +200,10 @@ under the License.
         <attribute name="processedCount" type="Integer" mode="OUT" optional="true"/>
     </service>
 
+    <service name="escalateOverdueSupportCases" engine="java"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="escalateOverdueSupportCases" auth="true">
+        <description>Escalate cases whose first response or resolution SLA is overdue.</description>
+        <attribute name="escalatedCount" type="Integer" mode="OUT" optional="true"/>
+    </service>
+
 </services>

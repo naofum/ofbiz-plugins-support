@@ -45,6 +45,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
+import org.apache.ofbiz.support.sla.SupportSlaCalculator;
 
 /**
  * STEP S1: support case lifecycle services.
@@ -58,6 +59,7 @@ public final class SupportCaseServices {
     private static final String RESOURCE = "SupportUiLabels";
     private static final String STATUS_NEW = "SUPCS_NEW";
     private static final String STATUS_OPEN = "SUPCS_OPEN";
+    private static final String STATUS_PENDING = "SUPCS_PENDING";
     private static final String STATUS_RESOLVED = "SUPCS_RESOLVED";
     private static final String STATUS_CLOSED = "SUPCS_CLOSED";
     private static final String STATUS_CANCELLED = "SUPCS_CANCELLED";
@@ -113,13 +115,71 @@ public final class SupportCaseServices {
      * Selects the most general active SLA for the first step. The product/type/priority
      * selection and the business-calendar calculation are added in STEP S3.
      */
+    private static GenericValue selectSla(Delegator delegator, GenericValue supportCase) throws GenericEntityException {
+        String productId = supportCase.getString("productId");
+        String financialProductTypeId = null;
+        if (UtilValidate.isNotEmpty(productId)) {
+            GenericValue financialProduct = EntityQuery.use(delegator).from("FinancialProduct")
+                    .where("productId", productId).queryOne();
+            financialProductTypeId = financialProduct == null ? null : financialProduct.getString("financialProductTypeId");
+        }
+        String contractTypeId = null;
+        if (UtilValidate.isNotEmpty(supportCase.getString("financeContractId"))) {
+            GenericValue contract = EntityQuery.use(delegator).from("FinanceContract")
+                    .where("financeContractId", supportCase.getString("financeContractId")).queryOne();
+            contractTypeId = contract == null ? null : contract.getString("contractTypeId");
+        }
+        BigDecimal priority = decimal(supportCase, "priority");
+        String sourceEnumId = supportCase.getString("sourceEnumId");
+        Timestamp now = UtilDateTime.nowTimestamp();
+        List<GenericValue> slas = EntityQuery.use(delegator).from("SupportSla")
+                .where("active", "Y").orderBy("sequenceNum").queryList();
+        for (GenericValue sla : slas) {
+            if (!effective(sla, now)) {
+                continue;
+            }
+            if (UtilValidate.isNotEmpty(sla.getString("productId")) && !sla.getString("productId").equals(productId)) {
+                continue;
+            }
+            if (UtilValidate.isNotEmpty(sla.getString("financialProductTypeId"))
+                    && !sla.getString("financialProductTypeId").equals(financialProductTypeId)) {
+                continue;
+            }
+            if (UtilValidate.isNotEmpty(sla.getString("contractTypeId"))
+                    && !sla.getString("contractTypeId").equals(contractTypeId)) {
+                continue;
+            }
+            if (sla.get("priority") != null
+                    && (priority == null || decimal(sla, "priority").compareTo(priority) != 0)) {
+                continue;
+            }
+            if (UtilValidate.isNotEmpty(sla.getString("sourceEnumId"))
+                    && !sla.getString("sourceEnumId").equals(sourceEnumId)) {
+                continue;
+            }
+            return sla;
+        }
+        return null;
+    }
+
+    private static boolean effective(GenericValue value, Timestamp now) {
+        Timestamp fromDate = value.getTimestamp("fromDate");
+        Timestamp thruDate = value.getTimestamp("thruDate");
+        return (fromDate == null || !fromDate.after(now)) && (thruDate == null || !thruDate.before(now));
+    }
+
+    private static BigDecimal decimal(GenericValue value, String field) {
+        Object raw = value.get(field);
+        return raw == null ? null : new BigDecimal(raw.toString());
+    }
+
     private static void applySla(Delegator delegator, GenericValue supportCase) throws GenericEntityException {
-        GenericValue sla = EntityQuery.use(delegator).from("SupportSla")
-                .where("active", "Y")
-                .orderBy("sequenceNum")
-                .queryFirst();
-        long firstResponseMinutes = 240L;
-        long resolutionMinutes = 2880L;
+        GenericValue sla = selectSla(delegator, supportCase);
+        long firstResponseMinutes = (long) UtilProperties.getPropertyNumber("support",
+                "support.sla.default.firstResponseMinutes", 240);
+        long resolutionMinutes = (long) UtilProperties.getPropertyNumber("support",
+                "support.sla.default.resolutionMinutes", 2880);
+        String businessCalendarId = null;
         if (sla != null) {
             if (sla.get("firstResponseMinutes") != null) {
                 firstResponseMinutes = sla.getLong("firstResponseMinutes");
@@ -127,6 +187,7 @@ public final class SupportCaseServices {
             if (sla.get("resolutionMinutes") != null) {
                 resolutionMinutes = sla.getLong("resolutionMinutes");
             }
+            businessCalendarId = sla.getString("businessCalendarId");
             supportCase.set("slaId", sla.getString("slaId"));
         }
         Timestamp openedAt = supportCase.getTimestamp("openedAt");
@@ -134,8 +195,109 @@ public final class SupportCaseServices {
             openedAt = UtilDateTime.nowTimestamp();
             supportCase.set("openedAt", openedAt);
         }
-        supportCase.set("firstResponseDueAt", new Timestamp(openedAt.getTime() + firstResponseMinutes * 60_000L));
-        supportCase.set("resolutionDueAt", new Timestamp(openedAt.getTime() + resolutionMinutes * 60_000L));
+        supportCase.set("firstResponseDueAt", SupportSlaCalculator.addMinutes(delegator, openedAt,
+                firstResponseMinutes, businessCalendarId));
+        supportCase.set("resolutionDueAt", SupportSlaCalculator.addMinutes(delegator, openedAt,
+                resolutionMinutes, businessCalendarId));
+    }
+
+    private static GenericValue findQueueMapping(Delegator delegator, String productId, String financialProductTypeId,
+            String contractTypeId, Timestamp now) throws GenericEntityException {
+        List<GenericValue> mappings = EntityQuery.use(delegator).from("SupportQueueProduct")
+                .where("active", "Y").orderBy("sequenceNum").queryList();
+        for (GenericValue mapping : mappings) {
+            if (!effective(mapping, now)) {
+                continue;
+            }
+            if (UtilValidate.isNotEmpty(mapping.getString("productId"))
+                    && !mapping.getString("productId").equals(productId)) {
+                continue;
+            }
+            if (UtilValidate.isNotEmpty(mapping.getString("financialProductTypeId"))
+                    && !mapping.getString("financialProductTypeId").equals(financialProductTypeId)) {
+                continue;
+            }
+            if (UtilValidate.isNotEmpty(mapping.getString("contractTypeId"))
+                    && !mapping.getString("contractTypeId").equals(contractTypeId)) {
+                continue;
+            }
+            return mapping;
+        }
+        return null;
+    }
+
+    private static GenericValue chooseQueueMember(Delegator delegator, String queueId, Timestamp now)
+            throws GenericEntityException {
+        List<GenericValue> members = EntityQuery.use(delegator).from("SupportQueueMember")
+                .where("queueId", queueId, "active", "Y").queryList();
+        GenericValue selected = null;
+        long selectedLoad = Long.MAX_VALUE;
+        Timestamp selectedLastAssigned = null;
+        for (GenericValue member : members) {
+            if (!effective(member, now)) {
+                continue;
+            }
+            long openCases = EntityQuery.use(delegator).from("SupportCase")
+                    .where(EntityCondition.makeCondition(EntityOperator.AND,
+                            EntityCondition.makeCondition("assigneePartyId", member.getString("partyId")),
+                            EntityCondition.makeCondition("statusId", EntityOperator.IN,
+                                    List.of(STATUS_NEW, STATUS_OPEN, "SUPCS_PENDING"))))
+                    .queryCount();
+            if (member.get("capacity") != null && openCases >= member.getLong("capacity")) {
+                continue;
+            }
+            Timestamp lastAssigned = member.getTimestamp("lastAssignedDate");
+            if (selected == null || openCases < selectedLoad
+                    || (openCases == selectedLoad
+                            && (selectedLastAssigned == null
+                                    || (lastAssigned != null && lastAssigned.before(selectedLastAssigned))))) {
+                selected = member;
+                selectedLoad = openCases;
+                selectedLastAssigned = lastAssigned;
+            }
+        }
+        return selected;
+    }
+
+    private static void routeSupportCase(Delegator delegator, GenericValue supportCase, Timestamp now)
+            throws GenericEntityException {
+        String productId = supportCase.getString("productId");
+        String financialProductTypeId = null;
+        if (UtilValidate.isNotEmpty(productId)) {
+            GenericValue financialProduct = EntityQuery.use(delegator).from("FinancialProduct")
+                    .where("productId", productId).queryOne();
+            financialProductTypeId = financialProduct == null ? null : financialProduct.getString("financialProductTypeId");
+        }
+        String contractTypeId = null;
+        if (UtilValidate.isNotEmpty(supportCase.getString("financeContractId"))) {
+            GenericValue contract = EntityQuery.use(delegator).from("FinanceContract")
+                    .where("financeContractId", supportCase.getString("financeContractId")).queryOne();
+            contractTypeId = contract == null ? null : contract.getString("contractTypeId");
+        }
+        String queueId = supportCase.getString("queueId");
+        if (UtilValidate.isEmpty(queueId)) {
+            GenericValue mapping = findQueueMapping(delegator, productId, financialProductTypeId, contractTypeId, now);
+            if (mapping != null) {
+                queueId = mapping.getString("queueId");
+            } else if (UtilValidate.isEmpty(productId) && UtilValidate.isEmpty(supportCase.getString("financeContractId"))) {
+                queueId = UtilProperties.getPropertyValue("support", "support.triage.queue.id", "SUPPORT_TRIAGE");
+            } else {
+                queueId = UtilProperties.getPropertyValue("support", "support.default.queue.id", "SUPPORT_DEFAULT");
+            }
+            supportCase.set("queueId", queueId);
+        }
+        if (UtilValidate.isEmpty(supportCase.getString("assigneePartyId"))) {
+            GenericValue queue = EntityQuery.use(delegator).from("SupportQueue").where("queueId", queueId).queryOne();
+            if (queue == null || !"Y".equals(queue.getString("active"))) {
+                return;
+            }
+            GenericValue member = chooseQueueMember(delegator, queueId, now);
+            if (member != null) {
+                supportCase.set("assigneePartyId", member.getString("partyId"));
+                member.set("lastAssignedDate", now);
+                member.store();
+            }
+        }
     }
 
     private static void setIfPresent(GenericValue value, Map<String, Object> context, String field) {
@@ -167,6 +329,7 @@ public final class SupportCaseServices {
             if (supportCase.get("openedAt") == null) {
                 supportCase.set("openedAt", now);
             }
+            routeSupportCase(delegator, supportCase, now);
             supportCase.set("escalationLevel", BigDecimal.ZERO);
             supportCase.set("reopenedCount", BigDecimal.ZERO);
             supportCase.set("createdDate", now);
@@ -259,6 +422,29 @@ public final class SupportCaseServices {
                 }
             }
             supportCase.set("statusId", statusId);
+            if ("Y".equalsIgnoreCase(UtilProperties.getPropertyValue("support",
+                    "support.sla.pauseOnPending", "N"))) {
+                if (STATUS_PENDING.equals(statusId) && !STATUS_PENDING.equals(oldStatusId)) {
+                    supportCase.set("slaPausedAt", now);
+                } else if (STATUS_PENDING.equals(oldStatusId) && !STATUS_PENDING.equals(statusId)
+                        && supportCase.get("slaPausedAt") != null) {
+                    long pausedMinutes = (now.getTime() - supportCase.getTimestamp("slaPausedAt").getTime()) / 60_000L;
+                    BigDecimal pausedTotal = supportCase.get("slaPausedMinutes") == null
+                            ? BigDecimal.ZERO : decimal(supportCase, "slaPausedMinutes");
+                    supportCase.set("slaPausedMinutes", pausedTotal.add(BigDecimal.valueOf(pausedMinutes)));
+                    Timestamp firstResponseDueAt = supportCase.getTimestamp("firstResponseDueAt");
+                    if (firstResponseDueAt != null) {
+                        supportCase.set("firstResponseDueAt",
+                                new Timestamp(firstResponseDueAt.getTime() + pausedMinutes * 60_000L));
+                    }
+                    Timestamp resolutionDueAt = supportCase.getTimestamp("resolutionDueAt");
+                    if (resolutionDueAt != null) {
+                        supportCase.set("resolutionDueAt",
+                                new Timestamp(resolutionDueAt.getTime() + pausedMinutes * 60_000L));
+                    }
+                    supportCase.set("slaPausedAt", null);
+                }
+            }
             if (STATUS_RESOLVED.equals(statusId)) {
                 supportCase.set("resolvedAt", now);
                 if (UtilValidate.isNotEmpty(resolutionEnumId)) {
@@ -308,6 +494,145 @@ public final class SupportCaseServices {
 
     public static Map<String, Object> reopenSupportCase(DispatchContext dctx, Map<String, Object> context) {
         return changeStatus(dctx, context, STATUS_OPEN, null, getString(context, "reason"));
+    }
+
+    private static int getMaxEscalationLevel() {
+        String levels = UtilProperties.getPropertyValue("support", "support.escalation.levels", "1,2,3");
+        int count = 0;
+        for (String level : levels.split(",")) {
+            if (UtilValidate.isNotEmpty(level.trim())) {
+                count++;
+            }
+        }
+        return Math.max(count, 1);
+    }
+
+    private static String createEscalationTask(DispatchContext dctx, Map<String, Object> context,
+            GenericValue supportCase, int level) throws GenericEntityException {
+        Delegator delegator = dctx.getDelegator();
+        LocalDispatcher dispatcher = dctx.getDispatcher();
+        Locale locale = (Locale) context.get("locale");
+        String supportCaseId = supportCase.getString("supportCaseId");
+        String userLoginId = getUserLoginId(context);
+        String taskName = "Support escalation SUP-" + supportCaseId + " L" + level;
+        String taskDescription = message(locale, "SupportEscalationTaskDescription");
+        Timestamp now = UtilDateTime.nowTimestamp();
+        String financeContractId = supportCase.getString("financeContractId");
+        if (UtilValidate.isNotEmpty(financeContractId)) {
+            Map<String, Object> taskContext = new HashMap<>();
+            taskContext.put("userLogin", getUserLogin(delegator, context));
+            taskContext.put("financeContractId", financeContractId);
+            taskContext.put("financeWorkTypeEnumId", "FINWE_OTHER");
+            taskContext.put("triggerKey", "SUPESC:" + supportCaseId + ":" + level);
+            taskContext.put("workEffortName", taskName);
+            taskContext.put("description", taskDescription);
+            taskContext.put("dueDate", now);
+            taskContext.put("assigneePartyId", supportCase.getString("assigneePartyId"));
+            try {
+                Map<String, Object> result = dispatcher.runSync("createFinanceContractTask", taskContext);
+                if (ServiceUtil.isSuccess(result) && result.get("workEffortId") != null) {
+                    return (String) result.get("workEffortId");
+                }
+            } catch (GenericServiceException e) {
+                // fall through to the generic WorkEffort below
+            }
+        }
+        GenericValue workEffort = delegator.makeValue("WorkEffort");
+        String workEffortId = delegator.getNextSeqId("WorkEffort");
+        workEffort.set("workEffortId", workEffortId);
+        workEffort.set("workEffortTypeId", "TASK");
+        workEffort.set("currentStatusId", "CAL_NEEDS_ACTION");
+        workEffort.set("workEffortName", taskName);
+        workEffort.set("description", taskDescription);
+        workEffort.set("priority", supportCase.get("priority"));
+        workEffort.set("estimatedCompletionDate", now);
+        workEffort.set("createdDate", now);
+        workEffort.set("lastModifiedDate", now);
+        workEffort.set("createdByUserLogin", userLoginId);
+        workEffort.set("lastModifiedByUserLogin", userLoginId);
+        workEffort.create();
+        return workEffortId;
+    }
+
+    private static void createEscalationNote(Delegator delegator, GenericValue supportCase, int level,
+            String userLoginId) throws GenericEntityException {
+        Timestamp now = UtilDateTime.nowTimestamp();
+        GenericValue event = delegator.makeValue("CommunicationEvent");
+        String communicationEventId = delegator.getNextSeqId("CommunicationEvent");
+        GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin")
+                .where("userLoginId", userLoginId).queryOne();
+        event.set("communicationEventId", communicationEventId);
+        event.set("communicationEventTypeId", "COMMENT_NOTE");
+        event.set("statusId", "COM_COMPLETE");
+        event.set("subject", "Escalation level " + level);
+        event.set("content", "Support case SUP-" + supportCase.getString("supportCaseId")
+                + " was escalated to level " + level + ".");
+        event.set("contentMimeTypeId", "text/plain");
+        event.set("entryDate", now);
+        event.set("partyIdFrom", userLogin == null ? null : userLogin.getString("partyId"));
+        event.set("partyIdTo", supportCase.getString("customerPartyId"));
+        event.set("roleTypeIdFrom", "_NA_");
+        event.set("roleTypeIdTo", "_NA_");
+        event.create();
+        linkMessage(delegator, supportCase, event, "SUPMSG_INTERNAL", true, true, userLoginId);
+    }
+
+    public static Map<String, Object> escalateOverdueSupportCases(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        Timestamp now = UtilDateTime.nowTimestamp();
+        String userLoginId = getUserLoginId(context);
+        int escalated = 0;
+        try {
+            EntityCondition openStatus = EntityCondition.makeCondition("statusId", EntityOperator.IN,
+                    List.of(STATUS_NEW, STATUS_OPEN, STATUS_PENDING));
+            EntityCondition firstResponseOverdue = EntityCondition.makeCondition(EntityOperator.AND,
+                    EntityCondition.makeCondition("firstResponseAt", EntityOperator.EQUALS, null),
+                    EntityCondition.makeCondition("firstResponseDueAt", EntityOperator.LESS_THAN, now));
+            EntityCondition resolutionOverdue = EntityCondition.makeCondition(EntityOperator.AND,
+                    EntityCondition.makeCondition("resolvedAt", EntityOperator.EQUALS, null),
+                    EntityCondition.makeCondition("resolutionDueAt", EntityOperator.LESS_THAN, now));
+            EntityCondition overdue = EntityCondition.makeCondition(EntityOperator.OR,
+                    firstResponseOverdue, resolutionOverdue);
+            List<GenericValue> cases = EntityQuery.use(delegator).from("SupportCase")
+                    .where(EntityCondition.makeCondition(EntityOperator.AND, openStatus, overdue))
+                    .orderBy("openedAt").queryList();
+            long repeatMinutes = (long) UtilProperties.getPropertyNumber("support",
+                    "support.escalation.repeatMinutes", 1440);
+            int maxLevel = getMaxEscalationLevel();
+            for (GenericValue supportCase : cases) {
+                Timestamp lastEscalatedAt = supportCase.getTimestamp("lastEscalatedAt");
+                if (lastEscalatedAt != null
+                        && lastEscalatedAt.getTime() > now.getTime() - repeatMinutes * 60_000L) {
+                    continue;
+                }
+                int currentLevel = supportCase.get("escalationLevel") == null
+                        ? 0 : supportCase.getLong("escalationLevel").intValue();
+                int level = Math.min(currentLevel + 1, maxLevel);
+                supportCase.set("escalationLevel", BigDecimal.valueOf(level));
+                supportCase.set("lastEscalatedAt", now);
+                supportCase.set("lastModifiedDate", now);
+                supportCase.set("lastModifiedByUserLogin", userLoginId);
+                supportCase.store();
+
+                String workEffortId = createEscalationTask(dctx, context, supportCase, level);
+                GenericValue existingLink = EntityQuery.use(delegator).from("SupportCaseWorkEffort")
+                        .where("supportCaseId", supportCase.getString("supportCaseId"),
+                                "workEffortId", workEffortId).queryOne();
+                if (existingLink == null) {
+                    GenericValue link = delegator.makeValue("SupportCaseWorkEffort");
+                    link.set("supportCaseId", supportCase.getString("supportCaseId"));
+                    link.set("workEffortId", workEffortId);
+                    link.create();
+                }
+                createEscalationNote(delegator, supportCase, level, userLoginId);
+                escalated++;
+            }
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("escalatedCount", escalated);
+            return result;
+        } catch (GenericEntityException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
     }
 
     public static Map<String, Object> getSupportCase(DispatchContext dctx, Map<String, Object> context) {

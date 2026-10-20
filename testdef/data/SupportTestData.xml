@@ -52,6 +52,13 @@ under the License.
                      contractDate="2026-10-20 00:00:00.0"
                      processingLockVersion="0" createdDate="2026-10-20 00:00:00.0"/>
 
+    <SupportQueueProduct supportQueueProductId="TEST_SUP_QP" queueId="SUPPORT_DEFAULT"
+                         contractTypeId="LOAN" sequenceNum="1" active="Y"
+                         fromDate="2026-10-20 00:00:00.0"/>
+    <SupportSla slaId="TEST_SUP_SLA" description="Test loan support SLA"
+                contractTypeId="LOAN" firstResponseMinutes="60" resolutionMinutes="120"
+                active="Y" sequenceNum="1" fromDate="2026-10-20 00:00:00.0"/>
+
     <SupportQueueMember queueId="SUPPORT_DEFAULT" partyId="TEST_SUPPORT_AGENT"
                         active="Y" fromDate="2026-10-20 00:00:00.0"/>
 

@@ -18,6 +18,8 @@
  */
 package org.apache.ofbiz.support.test
 
+import java.sql.Timestamp
+
 import org.apache.ofbiz.base.util.UtilDateTime
 import org.apache.ofbiz.entity.GenericValue
 import org.apache.ofbiz.service.ServiceUtil
@@ -53,6 +55,20 @@ class SupportCaseTests extends OFBizTestCase {
                 sourceEnumId: 'SUPCSRC_STAFF',
                 subject: subject,
                 description: 'Test support case'
+        ])
+        ok(result)
+        return result.supportCaseId
+    }
+
+    private String createCaseWithContract(String subject) {
+        Map result = dispatcher.runSync('createSupportCase', [
+                userLogin: admin(),
+                customerPartyId: 'TEST_SUPPORT_CUST',
+                caseTypeEnumId: 'SUPCT_INQUIRY',
+                sourceEnumId: 'SUPCSRC_STAFF',
+                financeContractId: 'TEST_SUPPORT_CTR',
+                subject: subject,
+                description: 'Test support case with contract'
         ])
         ok(result)
         return result.supportCaseId
@@ -233,6 +249,42 @@ class SupportCaseTests extends OFBizTestCase {
         assert replyLink != null
         assert replyLink.supportCaseId == supportCaseId
         assert from('SupportCaseStatus').where('supportCaseId', supportCaseId).queryCount() >= 2
+    }
+
+    void testAutoAssignmentAndSla() {
+        String supportCaseId = createCaseWithContract('Auto assignment and SLA')
+        GenericValue supportCase = from('SupportCase').where('supportCaseId', supportCaseId).queryOne()
+        assert supportCase.queueId == 'SUPPORT_DEFAULT'
+        assert supportCase.assigneePartyId == 'TEST_SUPPORT_AGENT'
+        assert supportCase.slaId == 'TEST_SUP_SLA'
+        long firstResponseMinutes = (supportCase.firstResponseDueAt.time - supportCase.openedAt.time) / 60000L
+        long resolutionMinutes = (supportCase.resolutionDueAt.time - supportCase.openedAt.time) / 60000L
+        assert firstResponseMinutes == 60L
+        assert resolutionMinutes == 120L
+    }
+
+    void testEscalation() {
+        String supportCaseId = createCaseWithContract('Escalation')
+        GenericValue supportCase = from('SupportCase').where('supportCaseId', supportCaseId).queryOne()
+        Timestamp past = new Timestamp(System.currentTimeMillis() - 3_600_000L)
+        supportCase.set('firstResponseDueAt', past)
+        supportCase.set('resolutionDueAt', past)
+        supportCase.store()
+
+        Map result = dispatcher.runSync('escalateOverdueSupportCases', [userLogin: admin()])
+        ok(result)
+        assert result.escalatedCount >= 1
+        supportCase.refresh()
+        assert supportCase.getLong('escalationLevel') == 1L
+        assert supportCase.lastEscalatedAt != null
+
+        GenericValue link = from('SupportCaseWorkEffort').where('supportCaseId', supportCaseId).queryFirst()
+        assert link != null
+        GenericValue workEffort = from('WorkEffort').where('workEffortId', link.workEffortId).queryOne()
+        assert workEffort != null
+        GenericValue financeTask = from('FinanceContractWorkEffort')
+                .where('financeContractId', 'TEST_SUPPORT_CTR', 'workEffortId', link.workEffortId).queryOne()
+        assert financeTask != null
     }
 
     void testFindSupportCases() {

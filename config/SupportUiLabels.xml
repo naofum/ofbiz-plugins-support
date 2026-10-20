@@ -242,4 +242,8 @@ under the License.
         <value xml:lang="en">Attachment</value>
         <value xml:lang="ja">添付</value>
     </property>
+    <property key="SupportEscalationTaskDescription">
+        <value xml:lang="en">Escalated support case. Review the case, contact the customer and update the status.</value>
+        <value xml:lang="ja">エスカレーションされたサポートケースです。内容を確認し、顧客へ連絡して状態を更新してください。</value>
+    </property>
 </resource>
