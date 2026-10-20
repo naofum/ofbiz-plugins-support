@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/services.xsd">
+    <description>Support Component Services</description>
+    <vendor>Apache OFBiz</vendor>
+    <version>1.0</version>
+
+    <!-- ============================================================= -->
+    <!-- Permission service                                            -->
+    <!-- ============================================================= -->
+    <service name="supportGenericPermission" engine="simple" default-entity-name="SupportCase"
+            location="component://support/minilang/SupportPermissionServices.xml" invoke="supportGenericPermission" auth="true">
+        <description>Support generic permission checking logic</description>
+        <attribute name="mainAction" type="String" mode="IN" optional="false"/>
+        <attribute name="primaryPermission" type="String" mode="IN" optional="true" default-value="SUPPORT"/>
+        <attribute name="hasPermission" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <!-- ============================================================= -->
+    <!-- Case lifecycle                                                -->
+    <!-- ============================================================= -->
+    <service name="createSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="createSupportCase" auth="true">
+        <description>Create a support case. The initial status is always SUPCS_NEW.</description>
+        <permission-service service-name="supportGenericPermission" main-action="CREATE"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+        <attribute name="supportCaseId" type="String" mode="OUT" optional="true"/>
+        <override name="subject" allow-html="safe"/>
+        <override name="description" allow-html="safe"/>
+        <override name="satisfactionComment" allow-html="safe"/>
+    </service>
+
+    <service name="updateSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="updateSupportCase" auth="true">
+        <description>Update the editable fields of a support case. The status is not changed here.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+        <override name="subject" allow-html="safe"/>
+        <override name="description" allow-html="safe"/>
+        <override name="satisfactionComment" allow-html="safe"/>
+    </service>
+
+    <service name="assignSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="assignSupportCase" auth="true">
+        <description>Assign a support case to a queue and/or an agent.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="queueId" type="String" mode="IN" optional="true"/>
+        <attribute name="assigneePartyId" type="String" mode="IN" optional="true"/>
+    </service>
+
+    <service name="changeSupportCaseStatus" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="changeSupportCaseStatus" auth="true">
+        <description>Change the status through an allowed StatusValidChange.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="statusId" type="String" mode="IN" optional="false"/>
+        <attribute name="resolutionEnumId" type="String" mode="IN" optional="true"/>
+        <attribute name="note" type="String" mode="IN" optional="true"/>
+        <override name="note" allow-html="safe"/>
+    </service>
+
+    <service name="resolveSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="resolveSupportCase" auth="true">
+        <description>Resolve a support case and record the resolution code.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="resolutionEnumId" type="String" mode="IN" optional="true"/>
+        <attribute name="note" type="String" mode="IN" optional="true"/>
+        <override name="note" allow-html="safe"/>
+    </service>
+
+    <service name="closeSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="closeSupportCase" auth="true">
+        <description>Close a resolved support case.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="note" type="String" mode="IN" optional="true"/>
+        <override name="note" allow-html="safe"/>
+    </service>
+
+    <service name="reopenSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="reopenSupportCase" auth="true">
+        <description>Reopen a resolved or closed support case.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="reason" type="String" mode="IN" optional="true"/>
+        <override name="reason" allow-html="safe"/>
+    </service>
+
+    <service name="getSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="getSupportCase" auth="true">
+        <description>Get a support case with its status history and linked messages.</description>
+        <permission-service service-name="supportGenericPermission" main-action="VIEW"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="supportCase" type="GenericValue" mode="OUT" optional="true"/>
+        <attribute name="supportCaseStatuses" type="List" mode="OUT" optional="true"/>
+        <attribute name="supportCaseMessages" type="List" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="findSupportCases" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="findSupportCases" auth="true">
+        <description>Find support cases with simple filters.</description>
+        <permission-service service-name="supportGenericPermission" main-action="VIEW"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="true"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="true"/>
+        <attribute name="statusId" type="String" mode="IN" optional="true"/>
+        <attribute name="assigneePartyId" type="String" mode="IN" optional="true"/>
+        <attribute name="queueId" type="String" mode="IN" optional="true"/>
+        <attribute name="financeContractId" type="String" mode="IN" optional="true"/>
+        <attribute name="productId" type="String" mode="IN" optional="true"/>
+        <attribute name="subject" type="String" mode="IN" optional="true"/>
+        <attribute name="viewIndex" type="Integer" mode="IN" optional="true"/>
+        <attribute name="viewSize" type="Integer" mode="IN" optional="true"/>
+        <attribute name="supportCases" type="List" mode="OUT" optional="true"/>
+        <attribute name="caseCount" type="Integer" mode="OUT" optional="true"/>
+    </service>
+
+    <!-- ============================================================= -->
+    <!-- STEP S2: messages, thread and inbound email                   -->
+    <!-- ============================================================= -->
+    <service name="addSupportCaseMessage" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="addSupportCaseMessage" auth="true">
+        <description>Link an existing CommunicationEvent to a support case.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="communicationEventId" type="String" mode="IN" optional="false"/>
+        <attribute name="directionEnumId" type="String" mode="IN" optional="true"/>
+        <attribute name="isInternal" type="Boolean" mode="IN" optional="true"/>
+    </service>
+
+    <service name="addSupportCaseInternalNote" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="addSupportCaseInternalNote" auth="true">
+        <description>Create an internal COMMENT_NOTE and link it to a support case.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="subject" type="String" mode="IN" optional="true"/>
+        <attribute name="content" type="String" mode="IN" optional="false"/>
+        <attribute name="communicationEventId" type="String" mode="OUT" optional="true"/>
+        <override name="content" allow-html="any"/>
+    </service>
+
+    <service name="replySupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="replySupportCase" auth="true">
+        <description>Create an outbound email reply, link it to the case and queue it for sending.</description>
+        <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="subject" type="String" mode="IN" optional="true"/>
+        <attribute name="content" type="String" mode="IN" optional="false"/>
+        <attribute name="sendNow" type="Boolean" mode="IN" optional="true"/>
+        <attribute name="communicationEventId" type="String" mode="OUT" optional="true"/>
+        <override name="content" allow-html="any"/>
+        <override name="subject" allow-html="safe"/>
+    </service>
+
+    <service name="getSupportCaseThread" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="getSupportCaseThread" auth="true">
+        <description>Get the linked messages as a chronological thread with depth and visibility flags.</description>
+        <permission-service service-name="supportGenericPermission" main-action="VIEW"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="supportCaseThread" type="List" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="routeInboundSupportCommunication" engine="java"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="routeInboundSupportCommunication" auth="true">
+        <description>Route an inbound AUTO_EMAIL_COMM event to a support case (ECA or reconciliation job).</description>
+        <attribute name="communicationEventId" type="String" mode="IN" optional="false"/>
+        <attribute name="force" type="Boolean" mode="IN" optional="true"/>
+        <attribute name="autoAck" type="String" mode="IN" optional="true"/>
+        <attribute name="supportCaseId" type="String" mode="OUT" optional="true"/>
+        <attribute name="caseCreated" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="messageLinked" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="autoAckCommunicationEventId" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="linkOrphanInboundSupportEmails" engine="java"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="linkOrphanInboundSupportEmails" auth="true">
+        <description>Re-process inbound emails that were not linked to a support case.</description>
+        <attribute name="processedCount" type="Integer" mode="OUT" optional="true"/>
+    </service>
+
+</services>

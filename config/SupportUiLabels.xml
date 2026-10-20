@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/ofbiz-properties.xsd">
+    <property key="SupportApplication">
+        <value xml:lang="en">Support</value>
+        <value xml:lang="ja">サポート</value>
+    </property>
+    <property key="SupportCompanyName">
+        <value xml:lang="en">OFBiz Support</value>
+        <value xml:lang="ja">OFBiz サポート</value>
+    </property>
+    <property key="SupportCompanySubtitle">
+        <value xml:lang="en">Product Support</value>
+        <value xml:lang="ja">製品サポート</value>
+    </property>
+    <property key="PageTitleFindSupportCase">
+        <value xml:lang="en">Support Cases</value>
+        <value xml:lang="ja">サポートケース</value>
+    </property>
+    <property key="PageTitleViewSupportCase">
+        <value xml:lang="en">Support Case</value>
+        <value xml:lang="ja">サポートケース</value>
+    </property>
+    <property key="PageTitleEditSupportCase">
+        <value xml:lang="en">Edit Support Case</value>
+        <value xml:lang="ja">サポートケースの編集</value>
+    </property>
+    <property key="SupportCases">
+        <value xml:lang="en">Support Cases</value>
+        <value xml:lang="ja">サポートケース</value>
+    </property>
+    <property key="SupportFindCase">
+        <value xml:lang="en">Find Support Cases</value>
+        <value xml:lang="ja">サポートケースの検索</value>
+    </property>
+    <property key="SupportNewCase">
+        <value xml:lang="en">New Support Case</value>
+        <value xml:lang="ja">新規サポートケース</value>
+    </property>
+    <property key="SupportCaseInfo">
+        <value xml:lang="en">Case Information</value>
+        <value xml:lang="ja">ケース情報</value>
+    </property>
+    <property key="SupportCaseActions">
+        <value xml:lang="en">Actions</value>
+        <value xml:lang="ja">対応</value>
+    </property>
+    <property key="SupportCaseStatusHistory">
+        <value xml:lang="en">Status History</value>
+        <value xml:lang="ja">状態履歴</value>
+    </property>
+    <property key="SupportCaseMessages">
+        <value xml:lang="en">Messages</value>
+        <value xml:lang="ja">メッセージ</value>
+    </property>
+    <property key="SupportAssignCase">
+        <value xml:lang="en">Assign Case</value>
+        <value xml:lang="ja">担当の割当</value>
+    </property>
+    <property key="SupportChangeStatus">
+        <value xml:lang="en">Change Status</value>
+        <value xml:lang="ja">状態の変更</value>
+    </property>
+    <property key="SupportCaseId">
+        <value xml:lang="en">Case No.</value>
+        <value xml:lang="ja">ケース番号</value>
+    </property>
+    <property key="SupportSubject">
+        <value xml:lang="en">Subject</value>
+        <value xml:lang="ja">件名</value>
+    </property>
+    <property key="SupportCustomer">
+        <value xml:lang="en">Customer</value>
+        <value xml:lang="ja">顧客</value>
+    </property>
+    <property key="SupportStatus">
+        <value xml:lang="en">Status</value>
+        <value xml:lang="ja">状態</value>
+    </property>
+    <property key="SupportPriority">
+        <value xml:lang="en">Priority</value>
+        <value xml:lang="ja">優先度</value>
+    </property>
+    <property key="SupportSeverity">
+        <value xml:lang="en">Severity</value>
+        <value xml:lang="ja">重大度</value>
+    </property>
+    <property key="SupportAssignee">
+        <value xml:lang="en">Assignee</value>
+        <value xml:lang="ja">担当者</value>
+    </property>
+    <property key="SupportQueue">
+        <value xml:lang="en">Queue</value>
+        <value xml:lang="ja">キュー</value>
+    </property>
+    <property key="SupportOpenedAt">
+        <value xml:lang="en">Opened</value>
+        <value xml:lang="ja">受付日時</value>
+    </property>
+    <property key="SupportDueAt">
+        <value xml:lang="en">Resolution Due</value>
+        <value xml:lang="ja">解決期限</value>
+    </property>
+    <property key="SupportFirstResponseDueAt">
+        <value xml:lang="en">First Response Due</value>
+        <value xml:lang="ja">一次応答期限</value>
+    </property>
+    <property key="SupportCaseType">
+        <value xml:lang="en">Case Type</value>
+        <value xml:lang="ja">種別</value>
+    </property>
+    <property key="SupportSource">
+        <value xml:lang="en">Source</value>
+        <value xml:lang="ja">経路</value>
+    </property>
+    <property key="SupportDescription">
+        <value xml:lang="en">Description</value>
+        <value xml:lang="ja">内容</value>
+    </property>
+    <property key="SupportResolution">
+        <value xml:lang="en">Resolution</value>
+        <value xml:lang="ja">解決コード</value>
+    </property>
+    <property key="SupportContract">
+        <value xml:lang="en">Contract</value>
+        <value xml:lang="ja">契約</value>
+    </property>
+    <property key="SupportProduct">
+        <value xml:lang="en">Product</value>
+        <value xml:lang="ja">商品</value>
+    </property>
+    <property key="SupportApplicationType">
+        <value xml:lang="en">Application Type</value>
+        <value xml:lang="ja">申込種別</value>
+    </property>
+    <property key="SupportApplicationId">
+        <value xml:lang="en">Application ID</value>
+        <value xml:lang="ja">申込 ID</value>
+    </property>
+    <property key="SupportNote">
+        <value xml:lang="en">Note</value>
+        <value xml:lang="ja">メモ</value>
+    </property>
+    <property key="SupportNoCases">
+        <value xml:lang="en">No support cases found.</value>
+        <value xml:lang="ja">サポートケースがありません。</value>
+    </property>
+    <property key="SupportCaseNotFound">
+        <value xml:lang="en">Support case not found.</value>
+        <value xml:lang="ja">サポートケースが見つかりません。</value>
+    </property>
+    <property key="SupportInvalidStatusChange">
+        <value xml:lang="en">The requested status change is not allowed.</value>
+        <value xml:lang="ja">この状態遷移は許可されていません。</value>
+    </property>
+    <property key="SupportPermissionError">
+        <value xml:lang="en">You do not have permission to perform this support operation.</value>
+        <value xml:lang="ja">このサポート操作の権限がありません。</value>
+    </property>
+    <property key="SupportPermissionMainActionAttributeMissing">
+        <value xml:lang="en">The mainAction attribute is required.</value>
+        <value xml:lang="ja">mainAction 属性が必要です。</value>
+    </property>
+    <property key="SupportCaseCreated">
+        <value xml:lang="en">Support case created.</value>
+        <value xml:lang="ja">サポートケースを作成しました。</value>
+    </property>
+    <property key="SupportCaseUpdated">
+        <value xml:lang="en">Support case updated.</value>
+        <value xml:lang="ja">サポートケースを更新しました。</value>
+    </property>
+    <property key="SupportCaseAssigned">
+        <value xml:lang="en">Support case assigned.</value>
+        <value xml:lang="ja">サポートケースを割り当てました。</value>
+    </property>
+    <property key="SupportCaseStatusChanged">
+        <value xml:lang="en">Support case status changed.</value>
+        <value xml:lang="ja">サポートケースの状態を変更しました。</value>
+    </property>
+    <property key="SupportAutoAckBody">
+        <value xml:lang="en">Thank you for contacting support. Your case number is SUP-{0}. We will review your message and reply as soon as possible.</value>
+        <value xml:lang="ja">お問い合わせを受け付けました。ケース番号は SUP-{0} です。内容を確認のうえ、担当者より連絡いたします。</value>
+    </property>
+    <property key="SupportNoCustomerEmail">
+        <value xml:lang="en">The customer has no email address. Register a primary email address before replying.</value>
+        <value xml:lang="ja">顧客のメールアドレスがありません。返信する前に主要メールアドレスを登録してください。</value>
+    </property>
+    <property key="SupportNoFromEmail">
+        <value xml:lang="en">The sender has no email address. Register an email address for the support agent or set support.inbound.partyId.</value>
+        <value xml:lang="ja">送信者のメールアドレスがありません。担当者または support.inbound.partyId のメールアドレスを登録してください。</value>
+    </property>
+    <property key="SupportNoMessages">
+        <value xml:lang="en">No messages yet.</value>
+        <value xml:lang="ja">メッセージはまだありません。</value>
+    </property>
+    <property key="SupportThread">
+        <value xml:lang="en">Conversation</value>
+        <value xml:lang="ja">やり取り</value>
+    </property>
+    <property key="SupportReplyCase">
+        <value xml:lang="en">Reply to Customer</value>
+        <value xml:lang="ja">顧客への返信</value>
+    </property>
+    <property key="SupportInternalNote">
+        <value xml:lang="en">Internal Note</value>
+        <value xml:lang="ja">内部メモ</value>
+    </property>
+    <property key="SupportSendReply">
+        <value xml:lang="en">Send Reply</value>
+        <value xml:lang="ja">返信を送信</value>
+    </property>
+    <property key="SupportAddNote">
+        <value xml:lang="en">Add Note</value>
+        <value xml:lang="ja">メモを追加</value>
+    </property>
+    <property key="SupportInternalMessage">
+        <value xml:lang="en">Internal</value>
+        <value xml:lang="ja">内部</value>
+    </property>
+    <property key="SupportAutoMessage">
+        <value xml:lang="en">Automatic</value>
+        <value xml:lang="ja">自動</value>
+    </property>
+    <property key="SupportAttachment">
+        <value xml:lang="en">Attachment</value>
+        <value xml:lang="ja">添付</value>
+    </property>
+</resource>

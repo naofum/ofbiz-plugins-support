@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<entitymodel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/entitymodel.xsd">
+    <title>Support Component Entity Model</title>
+    <description>
+        Support case management for financial products and contracts.
+        SupportCase is the case root; CommunicationEvent remains the message store and is linked
+        through SupportCaseCommEvent. Contract tasks use core WorkEffort and FinanceContractWorkEffort.
+    </description>
+    <version>1.0</version>
+
+    <!-- ========================================================= -->
+    <!-- Support case                                              -->
+    <!-- ========================================================= -->
+    <entity entity-name="SupportCase" package-name="org.apache.ofbiz.support.casemgmt"
+            title="Support case">
+        <field name="supportCaseId" type="id"><description>primary sequenced ID</description></field>
+        <field name="externalId" type="id-long"><description>optional idempotency key from efinance or another source</description></field>
+        <field name="caseTypeEnumId" type="id"><description>SUPPORT_CASE_TYPE</description></field>
+        <field name="statusId" type="id"><description>SUPPORT_CASE_STATUS</description></field>
+        <field name="priority" type="numeric"><description>1 (high) to 9 (low)</description></field>
+        <field name="severity" type="numeric"><description>1 (high) to 5 (low); optional</description></field>
+        <field name="customerPartyId" type="id"><description>customer party</description></field>
+        <field name="financeContractId" type="id"><description>optional FinanceContract</description></field>
+        <field name="applicationTypeId" type="id"><description>LOAN / LEASE for a pre-contract case</description></field>
+        <field name="applicationId" type="id"><description>application ID for a pre-contract case</description></field>
+        <field name="productId" type="id"><description>optional core Product; a FinancialProduct shares the same productId</description></field>
+        <field name="subject" type="short-varchar"></field>
+        <field name="description" type="description"></field>
+        <field name="sourceEnumId" type="id"><description>SUPPORT_SOURCE</description></field>
+        <field name="assigneePartyId" type="id"><description>support agent</description></field>
+        <field name="queueId" type="id"><description>SupportQueue</description></field>
+        <field name="slaId" type="id"><description>applied SupportSla</description></field>
+        <field name="openedAt" type="date-time"><description>when the case was opened</description></field>
+        <field name="firstResponseAt" type="date-time"><description>first human response to the customer</description></field>
+        <field name="firstResponseDueAt" type="date-time"></field>
+        <field name="resolutionDueAt" type="date-time"></field>
+        <field name="lastMessageAt" type="date-time"></field>
+        <field name="resolvedAt" type="date-time"></field>
+        <field name="closedAt" type="date-time"></field>
+        <field name="slaPausedAt" type="date-time"><description>SLA pause start while waiting for the customer</description></field>
+        <field name="slaPausedMinutes" type="numeric"><description>total paused minutes</description></field>
+        <field name="resolutionEnumId" type="id"><description>SUPPORT_RESOLUTION</description></field>
+        <field name="escalationLevel" type="numeric"><description>0 = not escalated</description></field>
+        <field name="lastEscalatedAt" type="date-time"></field>
+        <field name="reopenedCount" type="numeric"></field>
+        <field name="satisfactionScore" type="numeric"><description>1 to 5; optional</description></field>
+        <field name="satisfactionComment" type="comment"></field>
+        <field name="rootCommunicationEventId" type="id"><description>root CommunicationEvent of the thread</description></field>
+        <field name="createdByUserLogin" type="id-vlong"></field>
+        <field name="lastModifiedByUserLogin" type="id-vlong"></field>
+        <field name="createdDate" type="date-time"></field>
+        <field name="lastModifiedDate" type="date-time"></field>
+        <prim-key field="supportCaseId"/>
+        <relation type="one" fk-name="SUPCASE_CUST" rel-entity-name="Party">
+            <key-map field-name="customerPartyId" rel-field-name="partyId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_CTR" rel-entity-name="FinanceContract">
+            <key-map field-name="financeContractId" rel-field-name="financeContractId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_PROD" rel-entity-name="Product">
+            <key-map field-name="productId" rel-field-name="productId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_QUEUE" rel-entity-name="SupportQueue">
+            <key-map field-name="queueId" rel-field-name="queueId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_ASGN" rel-entity-name="Party">
+            <key-map field-name="assigneePartyId" rel-field-name="partyId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_SLA" rel-entity-name="SupportSla">
+            <key-map field-name="slaId" rel-field-name="slaId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_STTS" rel-entity-name="StatusItem">
+            <key-map field-name="statusId" rel-field-name="statusId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_TYPE" rel-entity-name="Enumeration">
+            <key-map field-name="caseTypeEnumId" rel-field-name="enumId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_SRC" rel-entity-name="Enumeration">
+            <key-map field-name="sourceEnumId" rel-field-name="enumId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_RES" rel-entity-name="Enumeration">
+            <key-map field-name="resolutionEnumId" rel-field-name="enumId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCASE_ROOTCM" rel-entity-name="CommunicationEvent">
+            <key-map field-name="rootCommunicationEventId" rel-field-name="communicationEventId"/>
+        </relation>
+        <index name="SUPCASE_CUST_IDX">
+            <index-field name="customerPartyId"/>
+        </index>
+        <index name="SUPCASE_CTR_IDX">
+            <index-field name="financeContractId"/>
+        </index>
+        <index name="SUPCASE_STTS_IDX">
+            <index-field name="statusId"/>
+        </index>
+        <index name="SUPCASE_ASGN_IDX">
+            <index-field name="assigneePartyId"/>
+        </index>
+        <index name="SUPCASE_QUEUE_IDX">
+            <index-field name="queueId"/>
+        </index>
+        <index name="SUPCASE_FR_DUE_IDX">
+            <index-field name="firstResponseDueAt"/>
+        </index>
+        <index name="SUPCASE_DUE_IDX">
+            <index-field name="resolutionDueAt"/>
+        </index>
+        <index name="SUPCASE_PROD_IDX">
+            <index-field name="productId"/>
+        </index>
+        <index name="SUPCASE_EXT_IDX" unique="true">
+            <index-field name="externalId"/>
+        </index>
+    </entity>
+
+    <entity entity-name="SupportCaseStatus" package-name="org.apache.ofbiz.support.casemgmt"
+            title="Support case status history">
+        <field name="supportCaseStatusId" type="id"></field>
+        <field name="supportCaseId" type="id"></field>
+        <field name="statusId" type="id"></field>
+        <field name="statusDate" type="date-time"></field>
+        <field name="changedByUserLogin" type="id-vlong"></field>
+        <field name="note" type="comment"></field>
+        <prim-key field="supportCaseStatusId"/>
+        <relation type="one" fk-name="SUPCST_CS" rel-entity-name="SupportCase">
+            <key-map field-name="supportCaseId" rel-field-name="supportCaseId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCST_STTS" rel-entity-name="StatusItem">
+            <key-map field-name="statusId" rel-field-name="statusId"/>
+        </relation>
+        <index name="SUPCST_CASE_IDX">
+            <index-field name="supportCaseId"/>
+        </index>
+    </entity>
+
+    <entity entity-name="SupportCaseCommEvent" package-name="org.apache.ofbiz.support.message"
+            title="Support case communication event link">
+        <field name="supportCaseId" type="id"></field>
+        <field name="communicationEventId" type="id"></field>
+        <field name="directionEnumId" type="id"><description>SUPPORT_MSG_DIR</description></field>
+        <field name="isInternal" type="indicator"><description>Y = not visible to the customer</description></field>
+        <field name="isAuto" type="indicator"><description>Y = automatic acknowledgement/notification</description></field>
+        <field name="addedByUserLogin" type="id-vlong"></field>
+        <field name="addedDate" type="date-time"></field>
+        <prim-key field="supportCaseId"/>
+        <prim-key field="communicationEventId"/>
+        <relation type="one" fk-name="SUPCME_CS" rel-entity-name="SupportCase">
+            <key-map field-name="supportCaseId" rel-field-name="supportCaseId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCME_CME" rel-entity-name="CommunicationEvent">
+            <key-map field-name="communicationEventId" rel-field-name="communicationEventId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCME_DIR" rel-entity-name="Enumeration">
+            <key-map field-name="directionEnumId" rel-field-name="enumId"/>
+        </relation>
+        <index name="SUPCME_CME_IDX">
+            <index-field name="communicationEventId"/>
+        </index>
+    </entity>
+
+    <entity entity-name="SupportCaseWorkEffort" package-name="org.apache.ofbiz.support.casemgmt"
+            title="Support case task link">
+        <field name="supportCaseId" type="id"></field>
+        <field name="workEffortId" type="id"></field>
+        <prim-key field="supportCaseId"/>
+        <prim-key field="workEffortId"/>
+        <relation type="one" fk-name="SUPCWE_CS" rel-entity-name="SupportCase">
+            <key-map field-name="supportCaseId" rel-field-name="supportCaseId"/>
+        </relation>
+        <relation type="one" fk-name="SUPCWE_WE" rel-entity-name="WorkEffort">
+            <key-map field-name="workEffortId" rel-field-name="workEffortId"/>
+        </relation>
+    </entity>
+
+    <!-- ========================================================= -->
+    <!-- SLA / queue / routing                                     -->
+    <!-- ========================================================= -->
+    <entity entity-name="SupportSla" package-name="org.apache.ofbiz.support.sla"
+            title="Support SLA rule">
+        <field name="slaId" type="id"></field>
+        <field name="description" type="description"></field>
+        <field name="productId" type="id"></field>
+        <field name="financialProductTypeId" type="id"></field>
+        <field name="contractTypeId" type="id"></field>
+        <field name="priority" type="numeric"></field>
+        <field name="sourceEnumId" type="id"></field>
+        <field name="firstResponseMinutes" type="numeric"></field>
+        <field name="resolutionMinutes" type="numeric"></field>
+        <field name="businessCalendarId" type="id"></field>
+        <field name="active" type="indicator"></field>
+        <field name="fromDate" type="date-time"></field>
+        <field name="thruDate" type="date-time"></field>
+        <field name="sequenceNum" type="numeric"></field>
+        <prim-key field="slaId"/>
+        <relation type="one" fk-name="SUPSLA_PROD" rel-entity-name="Product">
+            <key-map field-name="productId" rel-field-name="productId"/>
+        </relation>
+        <relation type="one" fk-name="SUPSLA_FPT" rel-entity-name="FinancialProductType">
+            <key-map field-name="financialProductTypeId" rel-field-name="financialProductTypeId"/>
+        </relation>
+        <relation type="one" fk-name="SUPSLA_CAL" rel-entity-name="TechDataCalendar">
+            <key-map field-name="businessCalendarId" rel-field-name="calendarId"/>
+        </relation>
+        <relation type="one" fk-name="SUPSLA_SRC" rel-entity-name="Enumeration">
+            <key-map field-name="sourceEnumId" rel-field-name="enumId"/>
+        </relation>
+    </entity>
+
+    <entity entity-name="SupportQueue" package-name="org.apache.ofbiz.support.routing"
+            title="Support queue">
+        <field name="queueId" type="id"></field>
+        <field name="queueName" type="name"></field>
+        <field name="description" type="description"></field>
+        <field name="managerPartyId" type="id"></field>
+        <field name="assignStrategyEnumId" type="id"><description>SUPPORT_ASSIGN</description></field>
+        <field name="active" type="indicator"></field>
+        <field name="createdDate" type="date-time"></field>
+        <field name="lastModifiedDate" type="date-time"></field>
+        <prim-key field="queueId"/>
+        <relation type="one" fk-name="SUPQ_MGR" rel-entity-name="Party">
+            <key-map field-name="managerPartyId" rel-field-name="partyId"/>
+        </relation>
+        <relation type="one" fk-name="SUPQ_ASG" rel-entity-name="Enumeration">
+            <key-map field-name="assignStrategyEnumId" rel-field-name="enumId"/>
+        </relation>
+    </entity>
+
+    <entity entity-name="SupportQueueMember" package-name="org.apache.ofbiz.support.routing"
+            title="Support queue member">
+        <field name="queueId" type="id"></field>
+        <field name="partyId" type="id"></field>
+        <field name="active" type="indicator"></field>
+        <field name="capacity" type="numeric"><description>maximum open cases; empty = no limit</description></field>
+        <field name="lastAssignedDate" type="date-time"></field>
+        <field name="fromDate" type="date-time"></field>
+        <field name="thruDate" type="date-time"></field>
+        <prim-key field="queueId"/>
+        <prim-key field="partyId"/>
+        <relation type="one" fk-name="SUPQM_QUEUE" rel-entity-name="SupportQueue">
+            <key-map field-name="queueId" rel-field-name="queueId"/>
+        </relation>
+        <relation type="one" fk-name="SUPQM_PARTY" rel-entity-name="Party">
+            <key-map field-name="partyId" rel-field-name="partyId"/>
+        </relation>
+        <index name="SUPQM_PARTY_IDX">
+            <index-field name="partyId"/>
+        </index>
+    </entity>
+
+    <entity entity-name="SupportQueueProduct" package-name="org.apache.ofbiz.support.routing"
+            title="Support queue product mapping">
+        <field name="supportQueueProductId" type="id"></field>
+        <field name="queueId" type="id"></field>
+        <field name="productId" type="id"></field>
+        <field name="financialProductTypeId" type="id"></field>
+        <field name="contractTypeId" type="id"></field>
+        <field name="sequenceNum" type="numeric"></field>
+        <field name="active" type="indicator"></field>
+        <field name="fromDate" type="date-time"></field>
+        <field name="thruDate" type="date-time"></field>
+        <prim-key field="supportQueueProductId"/>
+        <relation type="one" fk-name="SUPQP_QUEUE" rel-entity-name="SupportQueue">
+            <key-map field-name="queueId" rel-field-name="queueId"/>
+        </relation>
+        <relation type="one" fk-name="SUPQP_PROD" rel-entity-name="Product">
+            <key-map field-name="productId" rel-field-name="productId"/>
+        </relation>
+        <relation type="one" fk-name="SUPQP_FPT" rel-entity-name="FinancialProductType">
+            <key-map field-name="financialProductTypeId" rel-field-name="financialProductTypeId"/>
+        </relation>
+        <index name="SUPQP_QUEUE_IDX">
+            <index-field name="queueId"/>
+        </index>
+    </entity>
+
+</entitymodel>

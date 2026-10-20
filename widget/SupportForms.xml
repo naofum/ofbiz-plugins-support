@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://ofbiz.apache.org/Widget-Form" xsi:schemaLocation="http://ofbiz.apache.org/Widget-Form http://ofbiz.apache.org/dtds/widget-form.xsd">
+
+    <form name="FindSupportCase" type="single" target="FindSupportCase" default-map-name="parameters"
+          focus-field-name="supportCaseId" header-row-style="header-row" default-table-style="basic-table">
+        <field name="supportCaseId" title="${uiLabelMap.SupportCaseId}"><text size="20"/></field>
+        <field name="customerPartyId" title="${uiLabelMap.SupportCustomer}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="statusId" title="${uiLabelMap.SupportStatus}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="StatusItem" key-field-name="statusId" description="${description}">
+                    <entity-constraint name="statusTypeId" value="SUPPORT_CASE_STATUS"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="queueId" title="${uiLabelMap.SupportQueue}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="SupportQueue" key-field-name="queueId" description="${queueName}">
+                    <entity-order-by field-name="queueName"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="assigneePartyId" title="${uiLabelMap.SupportAssignee}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="subject" title="${uiLabelMap.SupportSubject}"><text size="40"/></field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="ListSupportCases" type="list" list-name="supportCases" target="ViewSupportCase"
+          paginate-target="FindSupportCase" view-size="20" header-row-style="header-row-2"
+          default-table-style="basic-table hover-bar">
+        <actions>
+            <service service-name="findSupportCases" result-map="result" result-map-list="supportCases">
+                <field-map field-name="supportCaseId" from-field="parameters.supportCaseId"/>
+                <field-map field-name="customerPartyId" from-field="parameters.customerPartyId"/>
+                <field-map field-name="statusId" from-field="parameters.statusId"/>
+                <field-map field-name="assigneePartyId" from-field="parameters.assigneePartyId"/>
+                <field-map field-name="queueId" from-field="parameters.queueId"/>
+                <field-map field-name="subject" from-field="parameters.subject"/>
+                <field-map field-name="viewIndex" from-field="viewIndex"/>
+                <field-map field-name="viewSize" from-field="viewSize"/>
+            </service>
+        </actions>
+        <field name="supportCaseId" title="${uiLabelMap.SupportCaseId}">
+            <hyperlink description="${supportCaseId}" target="ViewSupportCase">
+                <parameter param-name="supportCaseId"/>
+            </hyperlink>
+        </field>
+        <field name="subject" title="${uiLabelMap.SupportSubject}"><display/></field>
+        <field name="customerPartyId" title="${uiLabelMap.SupportCustomer}">
+            <display-entity entity-name="PartyNameView" key-field-name="partyId" description="${firstName} ${lastName} ${groupName}"/>
+        </field>
+        <field name="financeContractId" title="${uiLabelMap.SupportContract}"><display/></field>
+        <field name="statusId" title="${uiLabelMap.SupportStatus}">
+            <display-entity entity-name="StatusItem" key-field-name="statusId" description="${description}"/>
+        </field>
+        <field name="priority" title="${uiLabelMap.SupportPriority}"><display/></field>
+        <field name="assigneePartyId" title="${uiLabelMap.SupportAssignee}">
+            <display-entity entity-name="PartyNameView" key-field-name="partyId" description="${firstName} ${lastName} ${groupName}"/>
+        </field>
+        <field name="queueId" title="${uiLabelMap.SupportQueue}">
+            <display-entity entity-name="SupportQueue" key-field-name="queueId" description="${queueName}"/>
+        </field>
+        <field name="openedAt" title="${uiLabelMap.SupportOpenedAt}"><display type="date-time"/></field>
+        <field name="resolutionDueAt" title="${uiLabelMap.SupportDueAt}"><display type="date-time"/></field>
+    </form>
+
+    <form name="SupportCaseInfo" type="single" default-map-name="supportCase" header-row-style="header-row"
+          default-table-style="basic-table">
+        <field name="supportCaseId" title="${uiLabelMap.SupportCaseId}"><display/></field>
+        <field name="statusId" title="${uiLabelMap.SupportStatus}">
+            <display-entity entity-name="StatusItem" key-field-name="statusId" description="${description}"/>
+        </field>
+        <field name="caseTypeEnumId" title="${uiLabelMap.SupportCaseType}">
+            <display-entity entity-name="Enumeration" key-field-name="enumId" description="${description}"/>
+        </field>
+        <field name="customerPartyId" title="${uiLabelMap.SupportCustomer}">
+            <display-entity entity-name="PartyNameView" key-field-name="partyId" description="${firstName} ${lastName} ${groupName}"/>
+        </field>
+        <field name="financeContractId" title="${uiLabelMap.SupportContract}"><display/></field>
+        <field name="productId" title="${uiLabelMap.SupportProduct}">
+            <display-entity entity-name="Product" key-field-name="productId" description="${productName}"/>
+        </field>
+        <field name="applicationTypeId" title="${uiLabelMap.SupportApplicationType}"><display/></field>
+        <field name="applicationId" title="${uiLabelMap.SupportApplicationId}"><display/></field>
+        <field name="subject" title="${uiLabelMap.SupportSubject}"><display/></field>
+        <field name="description" title="${uiLabelMap.SupportDescription}"><display/></field>
+        <field name="sourceEnumId" title="${uiLabelMap.SupportSource}">
+            <display-entity entity-name="Enumeration" key-field-name="enumId" description="${description}"/>
+        </field>
+        <field name="assigneePartyId" title="${uiLabelMap.SupportAssignee}">
+            <display-entity entity-name="PartyNameView" key-field-name="partyId" description="${firstName} ${lastName} ${groupName}"/>
+        </field>
+        <field name="queueId" title="${uiLabelMap.SupportQueue}">
+            <display-entity entity-name="SupportQueue" key-field-name="queueId" description="${queueName}"/>
+        </field>
+        <field name="priority" title="${uiLabelMap.SupportPriority}"><display/></field>
+        <field name="severity" title="${uiLabelMap.SupportSeverity}"><display/></field>
+        <field name="openedAt" title="${uiLabelMap.SupportOpenedAt}"><display type="date-time"/></field>
+        <field name="firstResponseDueAt" title="${uiLabelMap.SupportFirstResponseDueAt}"><display type="date-time"/></field>
+        <field name="resolutionDueAt" title="${uiLabelMap.SupportDueAt}"><display type="date-time"/></field>
+        <field name="firstResponseAt" title="${uiLabelMap.SupportFirstResponseDueAt}"><display type="date-time"/></field>
+        <field name="resolvedAt" title="${uiLabelMap.SupportStatus}"><display type="date-time"/></field>
+        <field name="closedAt" title="${uiLabelMap.SupportStatus}"><display type="date-time"/></field>
+        <field name="resolutionEnumId" title="${uiLabelMap.SupportResolution}">
+            <display-entity entity-name="Enumeration" key-field-name="enumId" description="${description}"/>
+        </field>
+        <field name="satisfactionScore" title="${uiLabelMap.SupportPriority}"><display/></field>
+    </form>
+
+    <form name="SupportAssignCase" type="single" target="assignSupportCase" default-map-name="supportCase"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="supportCaseId"><hidden/></field>
+        <field name="queueId" title="${uiLabelMap.SupportQueue}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="SupportQueue" key-field-name="queueId" description="${queueName}">
+                    <entity-order-by field-name="queueName"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="assigneePartyId" title="${uiLabelMap.SupportAssignee}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="submitButton" title="${uiLabelMap.CommonUpdate}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="ChangeSupportCaseStatus" type="single" target="changeSupportCaseStatus" default-map-name="supportCase"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="supportCaseId"><hidden/></field>
+        <field name="statusId" title="${uiLabelMap.SupportStatus}">
+            <drop-down allow-empty="false" current="first-in-list" current-description="${currentStatus.description}">
+                <entity-options entity-name="StatusValidChangeToDetail" key-field-name="statusIdTo" description="${transitionName} (${description})">
+                    <entity-constraint name="statusId" value="${supportCase.statusId}"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="resolutionEnumId" title="${uiLabelMap.SupportResolution}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_RESOLUTION"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="note" title="${uiLabelMap.SupportNote}"><text size="60"/></field>
+        <field name="submitButton" title="${uiLabelMap.CommonUpdate}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="SupportCaseStatusHistory" type="list" list-name="supportCaseStatuses" header-row-style="header-row-2"
+          default-table-style="basic-table hover-bar">
+        <field name="statusId" title="${uiLabelMap.SupportStatus}">
+            <display-entity entity-name="StatusItem" key-field-name="statusId" description="${description}"/>
+        </field>
+        <field name="statusDate" title="${uiLabelMap.CommonDate}"><display type="date-time"/></field>
+        <field name="changedByUserLogin" title="${uiLabelMap.SupportAssignee}"><display/></field>
+        <field name="note" title="${uiLabelMap.SupportNote}"><display/></field>
+    </form>
+
+    <form name="SupportCaseMessages" type="list" list-name="supportCaseMessages" header-row-style="header-row-2"
+          default-table-style="basic-table hover-bar">
+        <field name="communicationEventId" title="${uiLabelMap.SupportCaseMessages}">
+            <hyperlink description="${communicationEventId}" target="/partymgr/control/ViewCommunicationEvent" target-type="inter-app">
+                <parameter param-name="communicationEventId"/>
+            </hyperlink>
+        </field>
+        <field name="directionEnumId" title="${uiLabelMap.SupportSource}">
+            <display-entity entity-name="Enumeration" key-field-name="enumId" description="${description}"/>
+        </field>
+        <field name="addedDate" title="${uiLabelMap.CommonDate}"><display type="date-time"/></field>
+        <field name="isInternal" title="${uiLabelMap.SupportNote}"><display/></field>
+        <field name="isAuto" title="${uiLabelMap.SupportSource}"><display/></field>
+    </form>
+
+    <form name="EditSupportCase" type="single" target="updateSupportCase" default-map-name="supportCase"
+          header-row-style="header-row" default-table-style="basic-table">
+        <alt-target use-when="supportCase==null" target="createSupportCase"/>
+        <field name="supportCaseId"><hidden/></field>
+        <field name="customerPartyId" title="${uiLabelMap.SupportCustomer}" required-field="true">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="caseTypeEnumId" title="${uiLabelMap.SupportCaseType}" required-field="true">
+            <drop-down allow-empty="false" no-current-selected-key="SUPCT_INQUIRY">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_CASE_TYPE"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="sourceEnumId" title="${uiLabelMap.SupportSource}" required-field="true">
+            <drop-down allow-empty="false" no-current-selected-key="SUPCSRC_STAFF">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_SOURCE"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="subject" title="${uiLabelMap.SupportSubject}" required-field="true">
+            <text size="80" maxlength="255"/>
+        </field>
+        <field name="description" title="${uiLabelMap.SupportDescription}">
+            <textarea cols="80" rows="8"/>
+        </field>
+        <field name="priority" title="${uiLabelMap.SupportPriority}">
+            <drop-down allow-empty="false" no-current-selected-key="5">
+                <option key="1" description="1"/>
+                <option key="2" description="2"/>
+                <option key="3" description="3"/>
+                <option key="4" description="4"/>
+                <option key="5" description="5"/>
+                <option key="6" description="6"/>
+                <option key="7" description="7"/>
+                <option key="8" description="8"/>
+                <option key="9" description="9"/>
+            </drop-down>
+        </field>
+        <field name="severity" title="${uiLabelMap.SupportSeverity}"><text size="5" maxlength="2"/></field>
+        <field name="financeContractId" title="${uiLabelMap.SupportContract}"><text size="30" maxlength="20"/></field>
+        <field name="applicationTypeId" title="${uiLabelMap.SupportApplicationType}">
+            <drop-down allow-empty="true">
+                <option key="LOAN" description="LOAN"/>
+                <option key="LEASE" description="LEASE"/>
+            </drop-down>
+        </field>
+        <field name="applicationId" title="${uiLabelMap.SupportApplicationId}"><text size="30" maxlength="20"/></field>
+        <field name="productId" title="${uiLabelMap.SupportProduct}"><text size="30" maxlength="20"/></field>
+        <field name="queueId" title="${uiLabelMap.SupportQueue}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="SupportQueue" key-field-name="queueId" description="${queueName}">
+                    <entity-order-by field-name="queueName"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="assigneePartyId" title="${uiLabelMap.SupportAssignee}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="ReplySupportCase" type="single" target="replySupportCase" default-map-name="supportCase"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="supportCaseId"><hidden/></field>
+        <field name="subject" title="${uiLabelMap.SupportSubject}">
+            <text size="80" maxlength="255" default-value="Re: [SUP-${supportCase.supportCaseId}] ${supportCase.subject}"/>
+        </field>
+        <field name="content" title="${uiLabelMap.SupportDescription}" required-field="true">
+            <textarea cols="80" rows="8"/>
+        </field>
+        <field name="submitButton" title="${uiLabelMap.SupportSendReply}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="AddSupportCaseInternalNote" type="single" target="addSupportCaseInternalNote"
+          default-map-name="supportCase" header-row-style="header-row" default-table-style="basic-table">
+        <field name="supportCaseId"><hidden/></field>
+        <field name="subject" title="${uiLabelMap.SupportSubject}">
+            <text size="80" maxlength="255"/>
+        </field>
+        <field name="content" title="${uiLabelMap.SupportInternalNote}" required-field="true">
+            <textarea cols="80" rows="6"/>
+        </field>
+        <field name="submitButton" title="${uiLabelMap.SupportAddNote}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+</forms>

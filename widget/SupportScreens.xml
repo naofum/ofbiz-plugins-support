@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<screens xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://ofbiz.apache.org/Widget-Screen" xsi:schemaLocation="http://ofbiz.apache.org/Widget-Screen http://ofbiz.apache.org/dtds/widget-screen.xsd">
+
+    <screen name="FindSupportCase">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleFindSupportCase"/>
+                <set field="headerItem" value="FindSupportCase"/>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <screenlet title="${uiLabelMap.SupportFindCase}">
+                            <include-form name="FindSupportCase" location="component://support/widget/SupportForms.xml"/>
+                        </screenlet>
+                        <screenlet title="${uiLabelMap.SupportCases}">
+                            <include-form name="ListSupportCases" location="component://support/widget/SupportForms.xml"/>
+                        </screenlet>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="ViewSupportCase">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleViewSupportCase"/>
+                <set field="headerItem" value="FindSupportCase"/>
+                <set field="supportCaseId" from-field="parameters.supportCaseId"/>
+                <entity-one entity-name="SupportCase" value-field="supportCase"/>
+                <entity-one entity-name="StatusItem" value-field="currentStatus">
+                    <field-map field-name="statusId" from-field="supportCase.statusId"/>
+                </entity-one>
+                <entity-and entity-name="SupportCaseStatus" list="supportCaseStatuses">
+                    <field-map field-name="supportCaseId" from-field="supportCaseId"/>
+                    <order-by field-name="-statusDate"/>
+                </entity-and>
+                <service service-name="getSupportCaseThread" result-map="threadResult">
+                    <field-map field-name="supportCaseId" from-field="supportCaseId"/>
+                </service>
+                <set field="supportCaseThread" from-field="threadResult.supportCaseThread"/>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <section>
+                            <condition>
+                                <if-empty field="supportCase"/>
+                            </condition>
+                            <widgets>
+                                <label style="h3" text="${uiLabelMap.SupportCaseNotFound}"/>
+                            </widgets>
+                            <fail-widgets>
+                                <container style="button-bar">
+                                    <link target="EditSupportCase" text="${uiLabelMap.CommonEdit}" style="smallSubmit">
+                                        <parameter param-name="supportCaseId" from-field="supportCaseId"/>
+                                    </link>
+                                    <link target="FindSupportCase" text="${uiLabelMap.CommonBack}" style="smallSubmit"/>
+                                </container>
+                                <screenlet title="${uiLabelMap.SupportCaseInfo}">
+                                    <include-form name="SupportCaseInfo" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                                <screenlet title="${uiLabelMap.SupportCaseActions}">
+                                    <include-form name="SupportAssignCase" location="component://support/widget/SupportForms.xml"/>
+                                    <horizontal-separator/>
+                                    <include-form name="ChangeSupportCaseStatus" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                                <container style="lefthalf">
+                                    <screenlet title="${uiLabelMap.SupportCaseStatusHistory}">
+                                        <include-form name="SupportCaseStatusHistory" location="component://support/widget/SupportForms.xml"/>
+                                    </screenlet>
+                                </container>
+                                <container style="righthalf">
+                                    <screenlet title="${uiLabelMap.SupportThread}">
+                                        <platform-specific>
+                                            <html><html-template location="component://support/template/support/SupportCaseThread.ftl"/></html>
+                                        </platform-specific>
+                                    </screenlet>
+                                </container>
+                                <container style="clear"/>
+                                <container style="lefthalf">
+                                    <screenlet title="${uiLabelMap.SupportReplyCase}">
+                                        <include-form name="ReplySupportCase" location="component://support/widget/SupportForms.xml"/>
+                                    </screenlet>
+                                </container>
+                                <container style="righthalf">
+                                    <screenlet title="${uiLabelMap.SupportInternalNote}">
+                                        <include-form name="AddSupportCaseInternalNote" location="component://support/widget/SupportForms.xml"/>
+                                    </screenlet>
+                                </container>
+                            </fail-widgets>
+                        </section>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="EditSupportCase">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleEditSupportCase"/>
+                <set field="headerItem" value="FindSupportCase"/>
+                <set field="supportCaseId" from-field="parameters.supportCaseId"/>
+                <entity-one entity-name="SupportCase" value-field="supportCase"/>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <screenlet title="${uiLabelMap.SupportNewCase}">
+                            <include-form name="EditSupportCase" location="component://support/widget/SupportForms.xml"/>
+                        </screenlet>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+</screens>

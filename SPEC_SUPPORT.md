@@ -2,19 +2,28 @@
 
 `REQUIREMENTS_SUPPORT.md` の要件に対する設計。各 STEP の実装後に「実装」「テスト」「検証」を追記する。
 
-> **状態：設計（未着手）**。2026-10-20 作成。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
+> **状態：S0/S1/S2 実装済み、S3 以降は設計（未着手）**。2026-10-20 作成。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
 
 ## 進捗
 
 | STEP | 内容 | 状態 |
 |------|------|------|
-| S0 | 基盤（2 章） | 設計（未着手） |
-| S1 | ケース管理（3 章） | 設計（未着手） |
-| S2 | メッセージ・スレッド・自動起票（4 章） | 設計（未着手） |
+| S0 | 基盤（2 章） | 実装済み（2026-10-20） |
+| S1 | ケース管理（3 章） | 実装済み（2026-10-20） |
+| S2 | メッセージ・スレッド・自動起票（4 章） | 実装済み（2026-10-20） |
 | S3 | 自動割当・SLA・エスカレーション（5 章） | 設計（未着手） |
 | S4 | 顧客ポータル API（6 章） | 設計（未着手） |
 | S5 | レポート・分析（7 章） | 設計（未着手） |
 | S6 | 監査・保存・運用・テスト（9〜12 章） | 設計（未着手） |
+
+### 実装・テスト・検証（2026-10-20）
+
+- **S0**：`plugins/support` のプラグイン骨格、`ofbiz-component.xml`、entity model、seed、権限、スタッフ Web アプリ（`/support`）、設定、テストスイートを作成した。
+- **S1**：`SupportCase` / `SupportCaseStatus` / `SupportCaseCommEvent` / `SupportCaseWorkEffort` / `SupportSla` / `SupportQueue` / `SupportQueueMember` / `SupportQueueProduct` と、作成・更新・割当・状態遷移・照会サービス、スタッフ画面（一覧・詳細・作成・編集）を実装した。
+- **S2**：`addSupportCaseMessage` / `addSupportCaseInternalNote` / `replySupportCase` / `getSupportCaseThread` / `routeInboundSupportCommunication` / `linkOrphanInboundSupportEmails`、受信メールの ECA（`createCommunicationEvent` commit）、件名トークン、自動受付返信、ケース詳細のスレッド表示・返信・内部メモを実装した。
+- **テスト**：`.\gradlew.bat compileJava compileGroovy` 成功。`.\gradlew.bat "ofbiz --load-data readers=seed --load-data component=support"` で seed 68 行を投入。`.\gradlew.bat "ofbiz --test component=support"` は 23 テスト、`errors="0"` / `failures="0"`。
+- **画面**：`/support/control/main`、`FindSupportCase`、`EditSupportCase`、`createSupportCase` → `ViewSupportCase`、内部メモ・返信・スレッド表示の描画を確認した。
+- **未実装**：S3 以降（自動割当・SLA 計算・顧客 API・レポート・監査/保存）。
 
 ---
 
@@ -26,7 +35,7 @@
 |------|------|
 | プラグイン | `plugins/support`（コンポーネント名 `support`） |
 | 画面 | スタッフ向けのみ。マウント `/support`、base-permission `OFBTOOLS,SUPPORT` |
-| パッケージ | `org.apache.ofbiz.support.case`（ケース）、`org.apache.ofbiz.support.message`（メッセージ・スレッド）、`org.apache.ofbiz.support.routing`（キュー・割当）、`org.apache.ofbiz.support.sla`（SLA）、`org.apache.ofbiz.support.api`（顧客 API）、`org.apache.ofbiz.support.report`（集計） |
+| パッケージ | `org.apache.ofbiz.support.casemgmt`（ケース）、`org.apache.ofbiz.support.message`（メッセージ・スレッド）、`org.apache.ofbiz.support.routing`（キュー・割当）、`org.apache.ofbiz.support.sla`（SLA）、`org.apache.ofbiz.support.api`（顧客 API）、`org.apache.ofbiz.support.report`（集計） |
 | 依存 | **support → finance**、core（party / workeffort / content / product）。**finance は support を参照しない**。**efinance → support + finance**（将来） |
 | データ | `data/SupportTypeData.xml`（seed：状態・種別・経路・解決コード・権限）、`data/SupportDemoData.xml`（demo：キュー・担当者・サンプル）、`testdef/data/SupportTestData.xml`（テスト専用） |
 | API | サービス API を正とする。`api/support.rest.xml` は契約の定義用（既定 `publish="false"`）。顧客向けの公開は efinance の認証・`EfAccessGuard` と同時に行う |
@@ -158,6 +167,7 @@ plugins/support/
 | `support.inbound.email.addresses` | 空 | 自動起票する宛先メールアドレス（カンマ区切り） |
 | `support.email.subject.token.prefix` | `SUP` | 件名トークン（`[SUP-12345]`） |
 | `support.email.auto.ack` | `Y` | 受付の自動返信 |
+| `support.auto.create.cases` | `Y` | `AUTO_EMAIL_COMM` から自動でケースを作る。本番では対象を限定するか `N` にする |
 | `support.sla.default.firstResponseMinutes` | `240` | 既定の一次応答時間（分） |
 | `support.sla.default.resolutionMinutes` | `2880` | 既定の解決時間（分） |
 | `support.sla.businessCalendarId` | 空 | 営業日カレンダー（core `TechDataCalendar`） |
@@ -281,7 +291,7 @@ plugins/support/
 
 | entity | 主な項目 |
 |--------|----------|
-| `SupportQueue` | `queueId`（PK）、`queueName`、`description`、`managerPartyId`、`defaultAssignStrategyEnumId`、`active` |
+| `SupportQueue` | `queueId`（PK）、`queueName`、`description`、`managerPartyId`、`assignStrategyEnumId`、`active` |
 | `SupportQueueMember` | `queueId`（PK）、`partyId`（PK）、`active`、`capacity`、`lastAssignedDate`、`fromDate`、`thruDate` |
 | `SupportQueueProduct` | `supportQueueProductId`（PK）、`queueId`、`productId`、`financialProductTypeId`、`contractTypeId`、`sequenceNum`、`active`、`fromDate`、`thruDate` |
 
@@ -364,7 +374,7 @@ SUPCS_CANCELLED → （終端）
 1. 既存の `storeIncomingEmail` が `CommunicationEvent` を作成する（`AUTO_EMAIL_COMM`、`messageId`、`parentCommEventId`、`origCommEventId`、`partyIdFrom`、`partyIdTo`、本文、添付）。
 2. `plugins/support/servicedef/secas.xml` の ECA が `createCommunicationEvent` の commit で `routeInboundSupportCommunication` を呼ぶ。
    - 条件：`communicationEventTypeId = AUTO_EMAIL_COMM`、`communicationEventId` が空でない、`partyIdFrom` が空でない。
-   - 対象の限定：`support.inbound.partyId` または `support.inbound.email.addresses` に一致する場合だけ。設定が空の場合は自動起票しない（安全側）。
+   - 対象の限定：`support.inbound.partyId` または `support.inbound.email.addresses` が設定されている場合は、一致する受信メールだけを処理する。両方空の場合は `support.auto.create.cases=Y` のときだけ `AUTO_EMAIL_COMM` を処理する（開発・専用メールボックス向け）。本番では設定で対象を限定する。
 3. `routeInboundSupportCommunication` の判定順：
    1. `parentCommEventId` / `origCommEventId` にリンクされたケースがある → そのケースに `SUPMSG_IN` で追加。`SUPCS_RESOLVED` / `SUPCS_CLOSED` なら `reopenSupportCase` を呼ぶ（設定で自動再オープン）。
    2. 件名に `[SUP-(\d+)]` がある → ケースを特定。送信者がそのケースの顧客（または法人の権限者）であることを確認して追加。他人のケースなら新規ケース扱いにする。
@@ -374,7 +384,7 @@ SUPCS_CANCELLED → （終端）
 5. ルーティングと SLA を適用する（6 章）。
 6. `support.email.auto.ack=Y` なら、受付番号と SLA の目安を自動返信する。自動返信は `isAuto=Y` とし、`firstResponseAt` には数えない。
 7. 送信者が不明（`partyIdFrom` が空。`COM_UNKNOWN_PARTY`）の場合は自動起票しない。既存の不明メール一覧で名寄せしてから、担当者が `createSupportCaseFromCommEvent` で起票する。
-8. 例外はログに記録し、メール取込を失敗させない。`supportLinkOrphanInboundEmails` ジョブが、一定時間経過してもケースにリンクされていない受信メッセージを再処理する。
+8. 例外はログに記録し、メール取込を失敗させない。`linkOrphanInboundSupportEmails` サービス（ジョブスケジューラから定期実行）が、一定時間経過してもケースにリンクされていない受信メッセージを再処理する。
 
 ### 4.3 送信・返信
 

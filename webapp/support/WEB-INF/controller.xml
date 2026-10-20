@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<site-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://ofbiz.apache.org/Site-Conf" xsi:schemaLocation="http://ofbiz.apache.org/Site-Conf http://ofbiz.apache.org/dtds/site-conf.xsd">
+    <include location="component://common/webcommon/WEB-INF/common-controller.xml"/>
+
+    <description>Support Component Site Configuration File</description>
+
+    <request-map uri="main">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="FindSupportCase"/>
+    </request-map>
+
+    <request-map uri="FindSupportCase">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="FindSupportCase"/>
+    </request-map>
+
+    <request-map uri="ViewSupportCase">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="EditSupportCase">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="EditSupportCase"/>
+    </request-map>
+
+    <request-map uri="createSupportCase">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="createSupportCase"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportCase"/>
+    </request-map>
+
+    <request-map uri="updateSupportCase">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="updateSupportCase"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportCase"/>
+    </request-map>
+
+    <request-map uri="assignSupportCase">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="assignSupportCase"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="changeSupportCaseStatus">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="changeSupportCaseStatus"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="resolveSupportCase">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="resolveSupportCase"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="closeSupportCase">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="closeSupportCase"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="reopenSupportCase">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="reopenSupportCase"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="replySupportCase">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="replySupportCase"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="addSupportCaseInternalNote">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="addSupportCaseInternalNote"/>
+        <response name="success" type="request-redirect" value="ViewSupportCase">
+            <redirect-parameter name="supportCaseId"/>
+        </response>
+        <response name="error" type="view" value="ViewSupportCase"/>
+    </request-map>
+
+    <request-map uri="LookupPartyName">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="LookupPartyName"/>
+    </request-map>
+
+    <view-map name="main" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportCase"/>
+    <view-map name="FindSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportCase"/>
+    <view-map name="ViewSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#ViewSupportCase"/>
+    <view-map name="EditSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#EditSupportCase"/>
+    <view-map name="LookupPartyName" type="screen" page="component://party/widget/partymgr/LookupScreens.xml#LookupPartyName"/>
+</site-conf>

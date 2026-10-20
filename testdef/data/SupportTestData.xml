@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<entity-engine-xml>
+
+    <Party partyId="TEST_SUPPORT_CUST" partyTypeId="PERSON"/>
+    <Person partyId="TEST_SUPPORT_CUST" firstName="Support" lastName="Customer"/>
+
+    <Party partyId="TEST_SUPPORT_AGENT" partyTypeId="PERSON"/>
+    <Person partyId="TEST_SUPPORT_AGENT" firstName="Support" lastName="Agent"/>
+
+    <ContactMech contactMechId="TST_SUP_CUST_EMAIL" contactMechTypeId="EMAIL_ADDRESS"
+                 infoString="test.support.customer@example.com"/>
+    <PartyContactMech partyId="TEST_SUPPORT_CUST" contactMechId="TST_SUP_CUST_EMAIL"
+                      fromDate="2026-10-20 00:00:00.0" allowSolicitation="Y"/>
+    <PartyContactMechPurpose partyId="TEST_SUPPORT_CUST" contactMechId="TST_SUP_CUST_EMAIL"
+                             contactMechPurposeTypeId="PRIMARY_EMAIL" fromDate="2026-10-20 00:00:00.0"/>
+
+    <ContactMech contactMechId="TST_SUP_AGENT_EMAIL" contactMechTypeId="EMAIL_ADDRESS"
+                 infoString="test.support.agent@example.com"/>
+    <PartyContactMech partyId="TEST_SUPPORT_AGENT" contactMechId="TST_SUP_AGENT_EMAIL"
+                      fromDate="2026-10-20 00:00:00.0" allowSolicitation="Y"/>
+    <PartyContactMechPurpose partyId="TEST_SUPPORT_AGENT" contactMechId="TST_SUP_AGENT_EMAIL"
+                             contactMechPurposeTypeId="PRIMARY_EMAIL" fromDate="2026-10-20 00:00:00.0"/>
+
+    <UserLogin userLoginId="support_test_agent" partyId="TEST_SUPPORT_AGENT" enabled="Y"/>
+    <UserLoginSecurityGroup userLoginId="support_test_agent" groupId="SUPPORT_AGENT"
+                            fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPER" permissionId="PARTYMGR_CME_CREATE"
+                             fromDate="2026-10-20 00:00:00.0"/>
+
+    <FinanceContract financeContractId="TEST_SUPPORT_CTR" contractTypeId="LOAN"
+                     customerPartyId="TEST_SUPPORT_CUST" statusId="FINCTR_CONTRACTED"
+                     currencyUomId="USD" principalAmount="1000.00"
+                     contractDate="2026-10-20 00:00:00.0"
+                     processingLockVersion="0" createdDate="2026-10-20 00:00:00.0"/>
+
+    <SupportQueueMember queueId="SUPPORT_DEFAULT" partyId="TEST_SUPPORT_AGENT"
+                        active="Y" fromDate="2026-10-20 00:00:00.0"/>
+
+</entity-engine-xml>
+
