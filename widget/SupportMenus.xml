@@ -34,6 +34,33 @@ under the License.
         <menu-item name="FindSupportCase" title="${uiLabelMap.SupportCases}">
             <link target="FindSupportCase"/>
         </menu-item>
+        <menu-item name="FindSupportAuditLog" title="${uiLabelMap.SupportAuditLog}">
+            <condition>
+                <or>
+                    <if-has-permission permission="SUPPORT" action="_AUDIT_VIEW"/>
+                    <if-has-permission permission="SUPPORT" action="_ADMIN"/>
+                </or>
+            </condition>
+            <link target="FindSupportAuditLog"/>
+        </menu-item>
+        <menu-item name="FindSupportQueue" title="${uiLabelMap.SupportQueues}">
+            <condition>
+                <or>
+                    <if-has-permission permission="SUPPORT" action="_QUEUE_MANAGE"/>
+                    <if-has-permission permission="SUPPORT" action="_ADMIN"/>
+                </or>
+            </condition>
+            <link target="FindSupportQueue"/>
+        </menu-item>
+        <menu-item name="FindSupportSla" title="${uiLabelMap.SupportSlaRules}">
+            <condition>
+                <or>
+                    <if-has-permission permission="SUPPORT" action="_SLA_MANAGE"/>
+                    <if-has-permission permission="SUPPORT" action="_ADMIN"/>
+                </or>
+            </condition>
+            <link target="FindSupportSla"/>
+        </menu-item>
         <menu-item name="EditSupportCase" title="${uiLabelMap.SupportNewCase}">
             <link target="EditSupportCase"/>
         </menu-item>

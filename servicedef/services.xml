@@ -51,6 +51,34 @@ under the License.
         <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
     </service>
 
+    <service name="supportAuditPermission" engine="simple" default-entity-name="SupportCase"
+            location="component://support/minilang/SupportPermissionServices.xml" invoke="supportAuditPermission" auth="true">
+        <description>Support audit log permission checking logic</description>
+        <attribute name="hasPermission" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="supportQueuePermission" engine="simple" default-entity-name="SupportCase"
+            location="component://support/minilang/SupportPermissionServices.xml" invoke="supportQueuePermission" auth="true">
+        <description>Support queue management permission checking logic</description>
+        <attribute name="hasPermission" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="supportSlaPermission" engine="simple" default-entity-name="SupportCase"
+            location="component://support/minilang/SupportPermissionServices.xml" invoke="supportSlaPermission" auth="true">
+        <description>Support SLA management permission checking logic</description>
+        <attribute name="hasPermission" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="supportAdminPermission" engine="simple" default-entity-name="SupportCase"
+            location="component://support/minilang/SupportPermissionServices.xml" invoke="supportAdminPermission" auth="true">
+        <description>Support administrator permission checking logic</description>
+        <attribute name="hasPermission" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
+    </service>
+
     <!-- ============================================================= -->
     <!-- Case lifecycle                                                -->
     <!-- ============================================================= -->
@@ -58,7 +86,12 @@ under the License.
             location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="createSupportCase" auth="true">
         <description>Create a support case. The initial status is always SUPCS_NEW.</description>
         <permission-service service-name="supportGenericPermission" main-action="CREATE"/>
-        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true">
+            <exclude field-name="isDeleted"/>
+            <exclude field-name="deletedAt"/>
+            <exclude field-name="deletedByUserLogin"/>
+            <exclude field-name="anonymizedAt"/>
+        </auto-attributes>
         <attribute name="supportCaseId" type="String" mode="OUT" optional="true"/>
         <override name="subject" allow-html="safe"/>
         <override name="description" allow-html="safe"/>
@@ -70,7 +103,12 @@ under the License.
         <description>Update the editable fields of a support case. The status is not changed here.</description>
         <permission-service service-name="supportGenericPermission" main-action="UPDATE"/>
         <auto-attributes include="pk" mode="IN" optional="false"/>
-        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true">
+            <exclude field-name="isDeleted"/>
+            <exclude field-name="deletedAt"/>
+            <exclude field-name="deletedByUserLogin"/>
+            <exclude field-name="anonymizedAt"/>
+        </auto-attributes>
         <override name="subject" allow-html="safe"/>
         <override name="description" allow-html="safe"/>
         <override name="satisfactionComment" allow-html="safe"/>
@@ -331,6 +369,154 @@ under the License.
         <attribute name="contentType" type="String" mode="IN" optional="true"/>
         <attribute name="uploadedFile" type="java.nio.ByteBuffer" mode="IN" optional="false"/>
         <attribute name="contentId" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <!-- ============================================================= -->
+    <!-- Queue and SLA administration                                 -->
+    <!-- ============================================================= -->
+    <service name="createSupportQueue" engine="entity-auto" invoke="create"
+            default-entity-name="SupportQueue" auth="true">
+        <description>Create a support queue.</description>
+        <permission-service service-name="supportQueuePermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="updateSupportQueue" engine="entity-auto" invoke="update"
+            default-entity-name="SupportQueue" auth="true">
+        <description>Update a support queue.</description>
+        <permission-service service-name="supportQueuePermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="createSupportQueueMember" engine="entity-auto" invoke="create"
+            default-entity-name="SupportQueueMember" auth="true">
+        <description>Add a member to a support queue.</description>
+        <permission-service service-name="supportQueuePermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="updateSupportQueueMember" engine="entity-auto" invoke="update"
+            default-entity-name="SupportQueueMember" auth="true">
+        <description>Update a support queue member.</description>
+        <permission-service service-name="supportQueuePermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="removeSupportQueueMember" engine="entity-auto" invoke="delete"
+            default-entity-name="SupportQueueMember" auth="true">
+        <description>Remove a member from a support queue.</description>
+        <permission-service service-name="supportQueuePermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+    </service>
+
+    <service name="createSupportQueueProduct" engine="entity-auto" invoke="create"
+            default-entity-name="SupportQueueProduct" auth="true">
+        <description>Map a queue to a product, financial product type or contract type.</description>
+        <permission-service service-name="supportQueuePermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="removeSupportQueueProduct" engine="entity-auto" invoke="delete"
+            default-entity-name="SupportQueueProduct" auth="true">
+        <description>Remove a queue product mapping.</description>
+        <permission-service service-name="supportQueuePermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+    </service>
+
+    <service name="createSupportSla" engine="entity-auto" invoke="create"
+            default-entity-name="SupportSla" auth="true">
+        <description>Create a support SLA rule.</description>
+        <permission-service service-name="supportSlaPermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="updateSupportSla" engine="entity-auto" invoke="update"
+            default-entity-name="SupportSla" auth="true">
+        <description>Update a support SLA rule.</description>
+        <permission-service service-name="supportSlaPermission"/>
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <!-- ============================================================= -->
+    <!-- STEP S6: audit, retention and operational access              -->
+    <!-- ============================================================= -->
+    <service name="logSupportCaseAccess" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.audit.SupportAuditServices" invoke="logSupportCaseAccess" auth="true">
+        <description>Record that a staff member viewed a support case.</description>
+        <permission-service service-name="supportGenericPermission" main-action="VIEW"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+    </service>
+
+    <service name="findSupportAuditLogs" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.audit.SupportAuditServices" invoke="findSupportAuditLogs" auth="true">
+        <description>Find support audit log entries (manager/admin only).</description>
+        <permission-service service-name="supportAuditPermission"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="true"/>
+        <attribute name="actionEnumId" type="String" mode="IN" optional="true"/>
+        <attribute name="actorUserLoginId" type="String" mode="IN" optional="true"/>
+        <attribute name="fromDate" type="Timestamp" mode="IN" optional="true"/>
+        <attribute name="thruDate" type="Timestamp" mode="IN" optional="true"/>
+        <attribute name="auditLogs" type="List" mode="OUT" optional="true"/>
+        <attribute name="auditLogCount" type="Integer" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="deleteSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.audit.SupportRetentionServices" invoke="deleteSupportCase" auth="true">
+        <description>Logically delete a support case; the record and audit trail are retained.</description>
+        <permission-service service-name="supportGenericPermission" main-action="DELETE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+    </service>
+
+    <service name="anonymizeSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.audit.SupportRetentionServices" invoke="anonymizeSupportCase" auth="true">
+        <description>Anonymize personal data in a support case and its messages.</description>
+        <permission-service service-name="supportGenericPermission" main-action="DELETE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+    </service>
+
+    <service name="getSupportAttachment" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.message.SupportAttachmentServices" invoke="getSupportAttachment" auth="true">
+        <description>Get metadata and text for an attachment after a staff case-view check.</description>
+        <permission-service service-name="supportGenericPermission" main-action="VIEW"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="contentId" type="String" mode="INOUT" optional="false"/>
+        <attribute name="mimeTypeId" type="String" mode="OUT" optional="true"/>
+        <attribute name="fileName" type="String" mode="OUT" optional="true"/>
+        <attribute name="dataResourceTypeId" type="String" mode="OUT" optional="true"/>
+        <attribute name="textData" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="downloadSupportAttachment" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.message.SupportAttachmentServices" invoke="downloadSupportAttachment" auth="true">
+        <description>Get an attachment for the owning customer (API); internal attachments are not exposed.</description>
+        <permission-service service-name="supportApiPermission" main-action="VIEW"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="contentId" type="String" mode="INOUT" optional="false"/>
+        <attribute name="mimeTypeId" type="String" mode="OUT" optional="true"/>
+        <attribute name="fileName" type="String" mode="OUT" optional="true"/>
+        <attribute name="dataResourceTypeId" type="String" mode="OUT" optional="true"/>
+        <attribute name="textData" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="applySupportRetention" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.audit.SupportRetentionServices" invoke="applySupportRetention" auth="true">
+        <description>Apply the configured retention rule to old closed/cancelled cases (scheduler job).</description>
+        <permission-service service-name="supportAdminPermission"/>
+        <attribute name="retentionDays" type="Long" mode="IN" optional="true"/>
+        <attribute name="mode" type="String" mode="IN" optional="true"/>
+        <attribute name="limit" type="Integer" mode="IN" optional="true"/>
+        <attribute name="deletedCount" type="Integer" mode="OUT" optional="true"/>
+        <attribute name="anonymizedCount" type="Integer" mode="OUT" optional="true"/>
+        <attribute name="retentionDays" type="Long" mode="OUT" optional="true"/>
+        <attribute name="mode" type="String" mode="OUT" optional="true"/>
     </service>
 
     <service name="getSupportMetrics" engine="java" default-entity-name="SupportCase"

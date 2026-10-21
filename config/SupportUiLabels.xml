@@ -266,6 +266,10 @@ under the License.
         <value xml:lang="en">Support Dashboard</value>
         <value xml:lang="ja">サポートダッシュボード</value>
     </property>
+    <property key="PageTitleSupportAuditLog">
+        <value xml:lang="en">Support Audit Log</value>
+        <value xml:lang="ja">サポート監査ログ</value>
+    </property>
     <property key="SupportDashboard">
         <value xml:lang="en">Support Dashboard</value>
         <value xml:lang="ja">サポートダッシュボード</value>
@@ -377,5 +381,185 @@ under the License.
     <property key="SupportCsvValue">
         <value xml:lang="en">Value</value>
         <value xml:lang="ja">値</value>
+    </property>
+    <property key="SupportCaseDeleted">
+        <value xml:lang="en">Support case logically deleted.</value>
+        <value xml:lang="ja">サポートケースを論理削除しました。</value>
+    </property>
+    <property key="SupportCaseAnonymized">
+        <value xml:lang="en">Support case personal data was anonymized.</value>
+        <value xml:lang="ja">サポートケースの個人情報を匿名化しました。</value>
+    </property>
+    <property key="SupportAttachmentNotFound">
+        <value xml:lang="en">Attachment not found or not visible.</value>
+        <value xml:lang="ja">添付ファイルが見つからないか、閲覧できません。</value>
+    </property>
+    <property key="SupportAuditLog">
+        <value xml:lang="en">Audit Log</value>
+        <value xml:lang="ja">監査ログ</value>
+    </property>
+    <property key="FindSupportAuditLog">
+        <value xml:lang="en">Find Audit Log</value>
+        <value xml:lang="ja">監査ログ検索</value>
+    </property>
+    <property key="SupportAuditAction">
+        <value xml:lang="en">Action</value>
+        <value xml:lang="ja">操作</value>
+    </property>
+    <property key="SupportAuditChannel">
+        <value xml:lang="en">Channel</value>
+        <value xml:lang="ja">経路</value>
+    </property>
+    <property key="SupportAuditActor">
+        <value xml:lang="en">Actor</value>
+        <value xml:lang="ja">実行者</value>
+    </property>
+    <property key="SupportAuditDate">
+        <value xml:lang="en">Date</value>
+        <value xml:lang="ja">日時</value>
+    </property>
+    <property key="SupportAuditSummary">
+        <value xml:lang="en">Summary</value>
+        <value xml:lang="ja">概要</value>
+    </property>
+    <property key="SupportAuditChangedFields">
+        <value xml:lang="en">Changed Fields</value>
+        <value xml:lang="ja">変更項目</value>
+    </property>
+    <property key="SupportAuditCase">
+        <value xml:lang="en">Case</value>
+        <value xml:lang="ja">ケース</value>
+    </property>
+    <property key="SupportAuditEmpty">
+        <value xml:lang="en">No audit entries match the conditions.</value>
+        <value xml:lang="ja">条件に一致する監査ログはありません。</value>
+    </property>
+    <property key="PageTitleFindSupportQueue">
+        <value xml:lang="en">Support Queues</value>
+        <value xml:lang="ja">サポートキュー</value>
+    </property>
+    <property key="PageTitleEditSupportQueue">
+        <value xml:lang="en">Support Queue</value>
+        <value xml:lang="ja">サポートキューの編集</value>
+    </property>
+    <property key="PageTitleFindSupportSla">
+        <value xml:lang="en">Support SLA Rules</value>
+        <value xml:lang="ja">SLA ルール</value>
+    </property>
+    <property key="PageTitleEditSupportSla">
+        <value xml:lang="en">Support SLA Rule</value>
+        <value xml:lang="ja">SLA ルールの編集</value>
+    </property>
+    <property key="SupportQueues">
+        <value xml:lang="en">Queues</value>
+        <value xml:lang="ja">キュー</value>
+    </property>
+    <property key="SupportNewQueue">
+        <value xml:lang="en">New Queue</value>
+        <value xml:lang="ja">新規キュー</value>
+    </property>
+    <property key="SupportNewSla">
+        <value xml:lang="en">New SLA</value>
+        <value xml:lang="ja">新規 SLA</value>
+    </property>
+    <property key="SupportSlaRules">
+        <value xml:lang="en">SLA Rules</value>
+        <value xml:lang="ja">SLA ルール</value>
+    </property>
+    <property key="SupportQueueId">
+        <value xml:lang="en">Queue ID</value>
+        <value xml:lang="ja">キュー ID</value>
+    </property>
+    <property key="SupportQueueName">
+        <value xml:lang="en">Queue Name</value>
+        <value xml:lang="ja">キュー名</value>
+    </property>
+    <property key="SupportQueueManager">
+        <value xml:lang="en">Manager</value>
+        <value xml:lang="ja">責任者</value>
+    </property>
+    <property key="SupportAssignStrategy">
+        <value xml:lang="en">Assign Strategy</value>
+        <value xml:lang="ja">割当方式</value>
+    </property>
+    <property key="SupportQueueMembers">
+        <value xml:lang="en">Members</value>
+        <value xml:lang="ja">メンバー</value>
+    </property>
+    <property key="SupportQueueProducts">
+        <value xml:lang="en">Product Mappings</value>
+        <value xml:lang="ja">商品との対応</value>
+    </property>
+    <property key="SupportQueueProductId">
+        <value xml:lang="en">Mapping ID</value>
+        <value xml:lang="ja">対応 ID</value>
+    </property>
+    <property key="SupportProductMapping">
+        <value xml:lang="en">Add Product Mapping</value>
+        <value xml:lang="ja">商品対応を追加</value>
+    </property>
+    <property key="SupportQueueMember">
+        <value xml:lang="en">Member</value>
+        <value xml:lang="ja">メンバー</value>
+    </property>
+    <property key="SupportCapacity">
+        <value xml:lang="en">Capacity</value>
+        <value xml:lang="ja">上限</value>
+    </property>
+    <property key="SupportActive">
+        <value xml:lang="en">Active</value>
+        <value xml:lang="ja">有効</value>
+    </property>
+    <property key="SupportAddMember">
+        <value xml:lang="en">Add Member</value>
+        <value xml:lang="ja">メンバー追加</value>
+    </property>
+    <property key="SupportRemoveMember">
+        <value xml:lang="en">Remove</value>
+        <value xml:lang="ja">削除</value>
+    </property>
+    <property key="SupportSlaId">
+        <value xml:lang="en">SLA ID</value>
+        <value xml:lang="ja">SLA ID</value>
+    </property>
+    <property key="SupportSlaDescription">
+        <value xml:lang="en">Description</value>
+        <value xml:lang="ja">説明</value>
+    </property>
+    <property key="SupportSlaPriority">
+        <value xml:lang="en">Priority</value>
+        <value xml:lang="ja">優先度</value>
+    </property>
+    <property key="SupportSlaSource">
+        <value xml:lang="en">Source</value>
+        <value xml:lang="ja">経路</value>
+    </property>
+    <property key="SupportFinancialProductType">
+        <value xml:lang="en">Financial Product Type</value>
+        <value xml:lang="ja">金融商品種別</value>
+    </property>
+    <property key="SupportContractType">
+        <value xml:lang="en">Contract Type</value>
+        <value xml:lang="ja">契約種別</value>
+    </property>
+    <property key="SupportSlaFirstResponse">
+        <value xml:lang="en">First Response (min)</value>
+        <value xml:lang="ja">一次応答（分）</value>
+    </property>
+    <property key="SupportSlaResolution">
+        <value xml:lang="en">Resolution (min)</value>
+        <value xml:lang="ja">解決（分）</value>
+    </property>
+    <property key="SupportSlaCalendar">
+        <value xml:lang="en">Business Calendar</value>
+        <value xml:lang="ja">営業日カレンダー</value>
+    </property>
+    <property key="SupportSlaSequence">
+        <value xml:lang="en">Sequence</value>
+        <value xml:lang="ja">順序</value>
+    </property>
+    <property key="SupportSlaEmpty">
+        <value xml:lang="en">No SLA rules are defined.</value>
+        <value xml:lang="ja">SLA ルールがありません。</value>
     </property>
 </resource>

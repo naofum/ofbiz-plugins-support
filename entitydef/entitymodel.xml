@@ -66,6 +66,10 @@ under the License.
         <field name="satisfactionScore" type="numeric"><description>1 to 5; optional</description></field>
         <field name="satisfactionComment" type="comment"></field>
         <field name="rootCommunicationEventId" type="id"><description>root CommunicationEvent of the thread</description></field>
+        <field name="isDeleted" type="indicator"><description>Y = logically deleted; the record is retained for audit</description></field>
+        <field name="deletedAt" type="date-time"></field>
+        <field name="deletedByUserLogin" type="id-vlong"></field>
+        <field name="anonymizedAt" type="date-time"><description>set when personal data was anonymized by retention</description></field>
         <field name="createdByUserLogin" type="id-vlong"></field>
         <field name="lastModifiedByUserLogin" type="id-vlong"></field>
         <field name="createdDate" type="date-time"></field>
@@ -131,6 +135,9 @@ under the License.
         <index name="SUPCASE_EXT_IDX" unique="true">
             <index-field name="externalId"/>
         </index>
+        <index name="SUPCASE_DEL_IDX">
+            <index-field name="isDeleted"/>
+        </index>
     </entity>
 
     <entity entity-name="SupportCaseStatus" package-name="org.apache.ofbiz.support.casemgmt"
@@ -190,6 +197,43 @@ under the License.
         <relation type="one" fk-name="SUPCWE_WE" rel-entity-name="WorkEffort">
             <key-map field-name="workEffortId" rel-field-name="workEffortId"/>
         </relation>
+    </entity>
+
+    <!-- ========================================================= -->
+    <!-- Audit / retention                                         -->
+    <!-- ========================================================= -->
+    <entity entity-name="SupportAuditLog" package-name="org.apache.ofbiz.support.audit"
+            title="Support audit log">
+        <field name="supportAuditLogId" type="id"><description>primary sequenced ID</description></field>
+        <field name="supportCaseId" type="id"><description>case affected; optional for list-level actions</description></field>
+        <field name="actionEnumId" type="id"><description>SUPPORT_AUDIT_ACTION</description></field>
+        <field name="channelEnumId" type="id"><description>SUPPORT_AUDIT_CHAN</description></field>
+        <field name="actorUserLoginId" type="id-vlong"></field>
+        <field name="actorPartyId" type="id"></field>
+        <field name="referenceId" type="id"><description>related CommunicationEvent, Content or other ID</description></field>
+        <field name="summary" type="short-varchar"><description>safe summary without message bodies or contact data</description></field>
+        <field name="changedFields" type="short-varchar"><description>comma-separated field names</description></field>
+        <field name="actionDate" type="date-time"></field>
+        <field name="success" type="indicator"></field>
+        <prim-key field="supportAuditLogId"/>
+        <relation type="one" fk-name="SUPAUD_CS" rel-entity-name="SupportCase">
+            <key-map field-name="supportCaseId" rel-field-name="supportCaseId"/>
+        </relation>
+        <relation type="one" fk-name="SUPAUD_ACT" title="Action" rel-entity-name="Enumeration">
+            <key-map field-name="actionEnumId" rel-field-name="enumId"/>
+        </relation>
+        <relation type="one" fk-name="SUPAUD_CH" title="Channel" rel-entity-name="Enumeration">
+            <key-map field-name="channelEnumId" rel-field-name="enumId"/>
+        </relation>
+        <index name="SUPAUD_CASE_IDX">
+            <index-field name="supportCaseId"/>
+        </index>
+        <index name="SUPAUD_DATE_IDX">
+            <index-field name="actionDate"/>
+        </index>
+        <index name="SUPAUD_ACTOR_IDX">
+            <index-field name="actorUserLoginId"/>
+        </index>
     </entity>
 
     <!-- ========================================================= -->

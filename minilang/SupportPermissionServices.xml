@@ -74,6 +74,76 @@ under the License.
         </if-has-permission>
     </simple-method>
 
+    <simple-method method-name="supportQueuePermission" short-description="Support queue management permission">
+        <if-has-permission permission="SUPPORT" action="_ADMIN">
+            <set field="hasPermission" type="Boolean" value="true"/>
+            <field-to-result field="hasPermission"/>
+            <else>
+                <if-has-permission permission="SUPPORT" action="_QUEUE_MANAGE">
+                    <set field="hasPermission" type="Boolean" value="true"/>
+                    <field-to-result field="hasPermission"/>
+                    <else>
+                        <property-to-field resource="SupportUiLabels" property="SupportPermissionError" field="failMessage"/>
+                        <set field="hasPermission" type="Boolean" value="false"/>
+                        <field-to-result field="hasPermission"/>
+                        <field-to-result field="failMessage"/>
+                    </else>
+                </if-has-permission>
+            </else>
+        </if-has-permission>
+    </simple-method>
+
+    <simple-method method-name="supportSlaPermission" short-description="Support SLA management permission">
+        <if-has-permission permission="SUPPORT" action="_ADMIN">
+            <set field="hasPermission" type="Boolean" value="true"/>
+            <field-to-result field="hasPermission"/>
+            <else>
+                <if-has-permission permission="SUPPORT" action="_SLA_MANAGE">
+                    <set field="hasPermission" type="Boolean" value="true"/>
+                    <field-to-result field="hasPermission"/>
+                    <else>
+                        <property-to-field resource="SupportUiLabels" property="SupportPermissionError" field="failMessage"/>
+                        <set field="hasPermission" type="Boolean" value="false"/>
+                        <field-to-result field="hasPermission"/>
+                        <field-to-result field="failMessage"/>
+                    </else>
+                </if-has-permission>
+            </else>
+        </if-has-permission>
+    </simple-method>
+
+    <simple-method method-name="supportAdminPermission" short-description="Support administrator permission">
+        <if-has-permission permission="SUPPORT" action="_ADMIN">
+            <set field="hasPermission" type="Boolean" value="true"/>
+            <field-to-result field="hasPermission"/>
+            <else>
+                <property-to-field resource="SupportUiLabels" property="SupportPermissionError" field="failMessage"/>
+                <set field="hasPermission" type="Boolean" value="false"/>
+                <field-to-result field="hasPermission"/>
+                <field-to-result field="failMessage"/>
+            </else>
+        </if-has-permission>
+    </simple-method>
+
+    <simple-method method-name="supportAuditPermission" short-description="Support audit log permission">
+        <if-has-permission permission="SUPPORT" action="_ADMIN">
+            <set field="hasPermission" type="Boolean" value="true"/>
+            <field-to-result field="hasPermission"/>
+            <else>
+                <if-has-permission permission="SUPPORT" action="_AUDIT_VIEW">
+                    <set field="hasPermission" type="Boolean" value="true"/>
+                    <field-to-result field="hasPermission"/>
+                    <else>
+                        <property-to-field resource="SupportUiLabels" property="SupportPermissionError" field="failMessage"/>
+                        <set field="hasPermission" type="Boolean" value="false"/>
+                        <field-to-result field="hasPermission"/>
+                        <field-to-result field="failMessage"/>
+                    </else>
+                </if-has-permission>
+            </else>
+        </if-has-permission>
+    </simple-method>
+
     <simple-method method-name="supportReportPermission" short-description="Support report permission">
         <if-has-permission permission="SUPPORT" action="_ADMIN">
             <set field="hasPermission" type="Boolean" value="true"/>

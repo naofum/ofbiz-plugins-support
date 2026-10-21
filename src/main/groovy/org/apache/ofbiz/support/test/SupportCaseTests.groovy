@@ -75,7 +75,7 @@ class SupportCaseTests extends OFBizTestCase {
     }
 
     void testScreensParse() {
-        assert ScreenFactory.getScreensFromLocation('component://support/widget/SupportScreens.xml').size() == 5
+        assert ScreenFactory.getScreensFromLocation('component://support/widget/SupportScreens.xml').size() == 10
     }
 
     void testCreateAndGet() {        String supportCaseId = createCase('Create and get')

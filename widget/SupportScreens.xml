@@ -109,6 +109,181 @@ under the License.
         </section>
     </screen>
 
+    <screen name="FindSupportQueue">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleFindSupportQueue"/>
+                <set field="headerItem" value="FindSupportQueue"/>
+                <entity-condition entity-name="SupportQueue" list="queues">
+                    <order-by field-name="queueName"/>
+                </entity-condition>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <container style="button-bar">
+                            <link target="EditSupportQueue" text="${uiLabelMap.SupportNewQueue}" style="button"/>
+                        </container>
+                        <screenlet title="${uiLabelMap.SupportQueues}">
+                            <include-form name="ListSupportQueues" location="component://support/widget/SupportForms.xml"/>
+                        </screenlet>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="EditSupportQueue">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleEditSupportQueue"/>
+                <set field="headerItem" value="FindSupportQueue"/>
+                <set field="queueId" from-field="parameters.queueId"/>
+                <entity-one entity-name="SupportQueue" value-field="supportQueue"/>
+                <entity-and entity-name="SupportQueueMember" list="queueMembers">
+                    <field-map field-name="queueId" from-field="queueId"/>
+                    <order-by field-name="partyId"/>
+                </entity-and>
+                <entity-and entity-name="SupportQueueProduct" list="queueProducts">
+                    <field-map field-name="queueId" from-field="queueId"/>
+                    <order-by field-name="sequenceNum"/>
+                </entity-and>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <container style="button-bar">
+                            <link target="FindSupportQueue" text="${uiLabelMap.CommonBack}" style="smallSubmit"/>
+                        </container>
+                        <section>
+                            <condition>
+                                <if-empty field="supportQueue"/>
+                            </condition>
+                            <widgets>
+                                <screenlet title="${uiLabelMap.SupportQueues}">
+                                    <include-form name="CreateSupportQueue" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                            </widgets>
+                            <fail-widgets>
+                                <screenlet title="${uiLabelMap.SupportQueues}">
+                                    <include-form name="EditSupportQueue" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                                <screenlet title="${uiLabelMap.SupportQueueMembers}">
+                                    <include-form name="ListSupportQueueMembers" location="component://support/widget/SupportForms.xml"/>
+                                    <horizontal-separator/>
+                                    <include-form name="CreateSupportQueueMember" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                                <screenlet title="${uiLabelMap.SupportQueueProducts}">
+                                    <include-form name="ListSupportQueueProducts" location="component://support/widget/SupportForms.xml"/>
+                                    <horizontal-separator/>
+                                    <include-form name="CreateSupportQueueProduct" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                            </fail-widgets>
+                        </section>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="FindSupportSla">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleFindSupportSla"/>
+                <set field="headerItem" value="FindSupportSla"/>
+                <entity-condition entity-name="SupportSla" list="slas">
+                    <order-by field-name="sequenceNum"/>
+                </entity-condition>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <container style="button-bar">
+                            <link target="EditSupportSla" text="${uiLabelMap.SupportNewSla}" style="button"/>
+                        </container>
+                        <screenlet title="${uiLabelMap.SupportSlaRules}">
+                            <include-form name="ListSupportSlas" location="component://support/widget/SupportForms.xml"/>
+                        </screenlet>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="EditSupportSla">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleEditSupportSla"/>
+                <set field="headerItem" value="FindSupportSla"/>
+                <set field="slaId" from-field="parameters.slaId"/>
+                <entity-one entity-name="SupportSla" value-field="supportSla"/>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <container style="button-bar">
+                            <link target="FindSupportSla" text="${uiLabelMap.CommonBack}" style="smallSubmit"/>
+                        </container>
+                        <section>
+                            <condition>
+                                <if-empty field="supportSla"/>
+                            </condition>
+                            <widgets>
+                                <screenlet title="${uiLabelMap.SupportSlaRules}">
+                                    <include-form name="CreateSupportSla" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                            </widgets>
+                            <fail-widgets>
+                                <screenlet title="${uiLabelMap.SupportSlaRules}">
+                                    <include-form name="EditSupportSla" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                            </fail-widgets>
+                        </section>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="FindSupportAuditLog">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleSupportAuditLog"/>
+                <set field="headerItem" value="FindSupportAuditLog"/>
+                <service service-name="findSupportAuditLogs" result-map="auditResult">
+                    <field-map field-name="supportCaseId" from-field="parameters.supportCaseId"/>
+                    <field-map field-name="actionEnumId" from-field="parameters.actionEnumId"/>
+                    <field-map field-name="actorUserLoginId" from-field="parameters.actorUserLoginId"/>
+                    <field-map field-name="fromDate" from-field="parameters.fromDate"/>
+                    <field-map field-name="thruDate" from-field="parameters.thruDate"/>
+                </service>
+                <set field="auditLogs" from-field="auditResult.auditLogs"/>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <screenlet title="${uiLabelMap.FindSupportAuditLog}">
+                            <include-form name="FindSupportAuditLog" location="component://support/widget/SupportForms.xml"/>
+                        </screenlet>
+                        <section>
+                            <condition>
+                                <if-empty field="auditLogs"/>
+                            </condition>
+                            <widgets>
+                                <label style="h3" text="${uiLabelMap.SupportAuditEmpty}"/>
+                            </widgets>
+                            <fail-widgets>
+                                <screenlet title="${uiLabelMap.SupportAuditLog}">
+                                    <include-form name="ListSupportAuditLogs" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                            </fail-widgets>
+                        </section>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
     <screen name="FindSupportCase">
         <section>
             <actions>
@@ -137,6 +312,9 @@ under the License.
                 <set field="headerItem" value="FindSupportCase"/>
                 <set field="supportCaseId" from-field="parameters.supportCaseId"/>
                 <entity-one entity-name="SupportCase" value-field="supportCase"/>
+                <service service-name="logSupportCaseAccess">
+                    <field-map field-name="supportCaseId" from-field="supportCaseId"/>
+                </service>
                 <entity-one entity-name="StatusItem" value-field="currentStatus">
                     <field-map field-name="statusId" from-field="supportCase.statusId"/>
                 </entity-one>
@@ -154,7 +332,10 @@ under the License.
                     <decorator-section name="body">
                         <section>
                             <condition>
-                                <if-empty field="supportCase"/>
+                                <or>
+                                    <if-empty field="supportCase"/>
+                                    <if-compare field="supportCase.isDeleted" operator="equals" value="Y"/>
+                                </or>
                             </condition>
                             <widgets>
                                 <label style="h3" text="${uiLabelMap.SupportCaseNotFound}"/>

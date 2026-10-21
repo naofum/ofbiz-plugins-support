@@ -78,6 +78,23 @@ under the License.
     <Enumeration enumId="SUPASG_ROUND_ROBIN" enumTypeId="SUPPORT_ASSIGN" enumCode="ROUND_ROBIN" sequenceId="02" description="Round robin"/>
     <Enumeration enumId="SUPASG_FIXED" enumTypeId="SUPPORT_ASSIGN" enumCode="FIXED" sequenceId="03" description="Fixed assignee"/>
 
+    <EnumerationType enumTypeId="SUPPORT_AUDIT_ACTION" description="Support audit action"/>
+    <Enumeration enumId="SUPAUD_CREATE" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="CREATE" sequenceId="01" description="Create"/>
+    <Enumeration enumId="SUPAUD_UPDATE" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="UPDATE" sequenceId="02" description="Update"/>
+    <Enumeration enumId="SUPAUD_ASSIGN" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="ASSIGN" sequenceId="03" description="Assign"/>
+    <Enumeration enumId="SUPAUD_STATUS" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="STATUS" sequenceId="04" description="Status change"/>
+    <Enumeration enumId="SUPAUD_VIEW" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="VIEW" sequenceId="05" description="View"/>
+    <Enumeration enumId="SUPAUD_DOWNLOAD" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="DOWNLOAD" sequenceId="06" description="Attachment download"/>
+    <Enumeration enumId="SUPAUD_UPLOAD" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="UPLOAD" sequenceId="07" description="Attachment upload"/>
+    <Enumeration enumId="SUPAUD_DELETE" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="DELETE" sequenceId="08" description="Logical delete"/>
+    <Enumeration enumId="SUPAUD_ANONYMIZE" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="ANONYMIZE" sequenceId="09" description="Anonymize"/>
+    <Enumeration enumId="SUPAUD_RETENTION" enumTypeId="SUPPORT_AUDIT_ACTION" enumCode="RETENTION" sequenceId="10" description="Retention batch"/>
+
+    <EnumerationType enumTypeId="SUPPORT_AUDIT_CHAN" description="Support audit channel"/>
+    <Enumeration enumId="SUPAUD_CH_STAFF" enumTypeId="SUPPORT_AUDIT_CHAN" enumCode="STAFF" sequenceId="01" description="Staff"/>
+    <Enumeration enumId="SUPAUD_CH_API" enumTypeId="SUPPORT_AUDIT_CHAN" enumCode="API" sequenceId="02" description="Customer API"/>
+    <Enumeration enumId="SUPAUD_CH_SYSTEM" enumTypeId="SUPPORT_AUDIT_CHAN" enumCode="SYSTEM" sequenceId="03" description="System"/>
+
     <!-- ========================================================= -->
     <!-- Permissions and groups                                    -->
     <!-- ========================================================= -->
@@ -92,6 +109,9 @@ under the License.
     <SecurityPermission permissionId="SUPPORT_API_CREATE" description="Create support cases through the customer API"/>
     <SecurityPermission permissionId="SUPPORT_API_UPDATE" description="Reply, close and rate own support cases through the customer API"/>
     <SecurityPermission permissionId="SUPPORT_REPORT_VIEW" description="View support reports and metrics"/>
+    <SecurityPermission permissionId="SUPPORT_AUDIT_VIEW" description="View support audit logs"/>
+    <SecurityPermission permissionId="SUPPORT_QUEUE_MANAGE" description="Manage support queues and members"/>
+    <SecurityPermission permissionId="SUPPORT_SLA_MANAGE" description="Manage support SLA rules"/>
 
     <SecurityGroup groupId="SUPPORT_AGENT" groupName="Support Agent" description="Support agent group"/>
     <SecurityGroup groupId="SUPPORT_MANAGER" groupName="Support Manager" description="Support manager group"/>
@@ -108,7 +128,12 @@ under the License.
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_UPDATE" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_DELETE" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_REPORT_VIEW" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_AUDIT_VIEW" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_QUEUE_MANAGE" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPER" permissionId="SUPPORT_REPORT_VIEW" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPER" permissionId="SUPPORT_QUEUE_MANAGE" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPER" permissionId="SUPPORT_SLA_MANAGE" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPER" permissionId="SUPPORT_AUDIT_VIEW" fromDate="2026-10-20 00:00:00.0"/>
 
     <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API_VIEW" fromDate="2026-10-20 00:00:00.0"/>

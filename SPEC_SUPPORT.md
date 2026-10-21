@@ -2,7 +2,7 @@
 
 `REQUIREMENTS_SUPPORT.md` の要件に対する設計。各 STEP の実装後に「実装」「テスト」「検証」を追記する。
 
-> **状態：S0/S1/S2/S3/S4/S5 実装済み、S6 は設計（未着手）**。2026-10-20 作成、2026-10-21 に S5 を追記。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
+> **状態：S0/S1/S2/S3/S4/S5/S6 実装済み**。2026-10-20 作成、2026-10-21 に S5・S6 を追記。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
 
 ## 進捗
 
@@ -14,7 +14,7 @@
 | S3 | 自動割当・SLA・エスカレーション（5 章） | 実装済み（2026-10-20） |
 | S4 | 顧客ポータル API（6 章） | 実装済み（2026-10-20） |
 | S5 | レポート・分析（7 章） | 実装済み（2026-10-21） |
-| S6 | 監査・保存・運用・テスト（9〜12 章） | 設計（未着手） |
+| S6 | 監査・保存・運用・テスト（9〜12 章） | 実装済み（2026-10-21） |
 
 ### 実装・テスト・検証（2026-10-20）
 
@@ -24,9 +24,10 @@
 - **S3**：`SupportQueueProduct` によるキューの決定、`SupportQueueMember` の最少負荷割当、`SupportSla` の選択、`SupportSlaCalculator` による営業時間の期限計算、`support.sla.pauseOnPending` の停止・再開、`escalateOverdueSupportCases` による期限超過の検知・エスカレーション・タスク作成を実装した。
 - **S4**：`createSupportCaseForCustomer` / `listSupportCasesForCustomer` / `getSupportCaseForCustomer` / `replySupportCaseFromCustomer` / `closeSupportCaseByCustomer` / `rateSupportCase` / `getSupportCaseFormOptions` / `uploadSupportAttachment` と `supportApiPermission` を実装した。顧客の所有確認、内部メモの非公開、`externalId` の冪等性、`api/support.rest.xml`（`publish="false"`）を追加した。
 - **S5**：`getSupportMetrics` を実装した。期間・キュー・担当・商品・種別・契約で絞り込み、受付・解決・クローズ・未解決・期限超過・平均一次応答時間・平均解決時間・SLA 遵守率・CSAT（平均と 1〜5 の分布）を返す。キュー・担当者・種別・商品の内訳（名称付き）、CSV 用の行データも返す。`SupportDashboard` 画面と `SupportMetricsCsv`（`text/csv`）を追加し、レポート権限 `SUPPORT_REPORT_VIEW` を `SUPPORT_MANAGER` / `SUPER` に付与した。
-- **テスト**：`.\gradlew.bat compileJava compileGroovy` 成功。`.\gradlew.bat "ofbiz --load-data readers=seed --load-data component=support"` で seed 79 行を投入。`.\gradlew.bat "ofbiz --test component=support"` は 36 テスト、`errors="0"` / `failures="0"`（`runtime/logs/test-results/supporttests.xml`）。
-- **画面**：`/support/control/main`（ケース一覧）、`FindSupportCase`、`EditSupportCase`、`createSupportCase` → `ViewSupportCase`、内部メモ・返信・スレッド表示、`SupportDashboard` の集計表と `SupportMetricsCsv` の CSV を確認した。キュー・SLA の値はケース詳細に表示される。
-- **未実装**：S6（監査・保存・運用・テストの仕上げ）。顧客向け REST の公開は efinance の認証完成後。エスカレーションのメール通知とジョブスケジューラの登録は運用設定で追加する。
+- **S6**：`SupportAuditLog` と監査サービスを追加し、ケースの作成・更新・割当・状態変更・閲覧、添付のアップロード・ダウンロードを記録する。論理削除（`isDeleted` / `deletedAt`）、保存期間バッチ（`applySupportRetention`、DELETE / ANONYMIZE）、個人情報の匿名化、顧客 API の連絡先項目除去、添付メタデータの権限付き取得を実装した。ジョブ `escalateOverdueSupportCases` / `linkOrphanInboundSupportEmails` / `applySupportRetention` を seed に登録し、キュー・SLA の管理画面とサービスを追加した。
+- **テスト**：`.\gradlew.bat compileJava compileGroovy` 成功。`.\gradlew.bat "ofbiz --load-data readers=seed --load-data component=support"` で seed 111 行を投入。`.\gradlew.bat "ofbiz --test component=support"` は 42 テスト、`errors="0"` / `failures="0"`（`runtime/logs/test-results/supporttests.xml`）。
+- **画面**：`/support/control/main`（ケース一覧）、`FindSupportCase`、`EditSupportCase`、`createSupportCase` → `ViewSupportCase`、内部メモ・返信・スレッド表示、`SupportDashboard` と `SupportMetricsCsv`、`FindSupportAuditLog`、`FindSupportQueue` / `EditSupportQueue`、`FindSupportSla` / `EditSupportSla` を実装した。キュー・SLA の値はケース詳細に表示される。
+- **未決・運用設定**：顧客向け REST の公開は efinance の認証完成後。エスカレーション等のメール通知は未実装（S7 以降または運用設定）。`sendCommEventAsEmail` の `In-Reply-To` 対応は core 変更を見送り、support 側の `parentCommEventId` / `origCommEventId` でスレッドを維持する。
 
 ---
 
@@ -465,7 +466,7 @@ SUPCS_CANCELLED → （終端）
 - `firstResponseDueAt = openedAt + firstResponseMinutes`、`resolutionDueAt = openedAt + resolutionMinutes`。
 - `firstResponseMinutes` / `resolutionMinutes` は、`businessCalendarId` がある場合は**営業時間内の分**、ない場合は暦の分として扱う。
 - 初期実装は `SupportSlaCalculator` を用意し、`TechDataCalendar` の週の定義（曜日ごとの開始時刻・容量）と `TechDataCalendarExcDay` で分を加算する。`TechDataCalendar` がない場合は暦の分として計算する。
-- 初期実装は `TechDataCalendarExcDay` を反映する。`TechDataCalendarExcWeek`（例外週）は S6 で扱う。
+- 初期実装は `TechDataCalendarExcDay` を反映する。`TechDataCalendarExcWeek`（例外週）は S7 以降で扱う。
 - `support.sla.pauseOnPending=Y` のとき：
   - `SUPCS_PENDING` にした時点で `slaPausedAt` を設定する。
   - `SUPCS_OPEN` に戻した時点で `slaPausedMinutes` に経過分を加算し、`firstResponseDueAt` / `resolutionDueAt` をその分だけ後ろへずらす。
@@ -477,7 +478,7 @@ SUPCS_CANCELLED → （終端）
   - `firstResponseAt` が空 かつ `firstResponseDueAt < now`
   - `resolvedAt` が空 かつ `resolutionDueAt < now`
 - 対象ごとに `escalationLevel` を 1 上げ、`lastEscalatedAt` を設定する。同じレベルで重複通知しない（`lastEscalatedAt` とレベルの組み合わせで判定）。
-- 通知：ケースにエスカレーションの内部メモ（`COMMENT_NOTE`）を作成し、担当者・マネージャ向けの `WorkEffort` タスクを作る。メール通知は S6 以降または運用設定で追加する。
+- 通知：ケースにエスカレーションの内部メモ（`COMMENT_NOTE`）を作成し、担当者・マネージャ向けの `WorkEffort` タスクを作る。メール通知は S7 以降または運用設定で追加する。
 - タスク：契約がある場合は `createFinanceContractTask`（`financeWorkTypeEnumId=FINWE_OTHER`、`triggerKey=supportCaseId:ESC:{level}`）。契約がない場合は core `WorkEffort` を作成し、`SupportCaseWorkEffort` でリンクする。
 - 最大レベルに達したら、`support.escalation.repeatMinutes` の間隔で「要対応」の内部メモとタスクを繰り返す。
 
@@ -515,9 +516,9 @@ SUPCS_CANCELLED → （終端）
 | `getSupportCaseFormOptions` | `customerPartyId` | 契約・申込・商品・種別の選択肢 |
 | `uploadSupportAttachment` | `customerPartyId`、`supportCaseId`、`communicationEventId`（任意）、`fileName`、`contentType`、`uploadedFile` | `contentId` |
 
-- 顧客の返信は `CommunicationEvent`（`WEB_SITE_COMMUNICATI`）として記録し、`SupportCaseCommEvent` に `SUPMSG_IN` でリンクする。担当者へのメール通知は S6 以降または運用設定で追加する。
+- 顧客の返信は `CommunicationEvent`（`WEB_SITE_COMMUNICATI`）として記録し、`SupportCaseCommEvent` に `SUPMSG_IN` でリンクする。担当者へのメール通知は S7 以降または運用設定で追加する。
 - 顧客は優先度・担当・キューを指定できない。support が既定値（通常）と SLA・ルーティングで設定する。
-- 顧客のクローズは、状態が `SUPCS_RESOLVED` なら `SUPCS_CLOSED`、それ以外（`SUPCS_NEW` / `SUPCS_OPEN` / `SUPCS_PENDING`）なら取り下げとして `SUPCS_CANCELLED` にし、`resolutionEnumId = SUPRES_WITHDRAWN` を設定する。担当者への通知は S6 以降または運用設定で追加する。
+- 顧客のクローズは、状態が `SUPCS_RESOLVED` なら `SUPCS_CLOSED`、それ以外（`SUPCS_NEW` / `SUPCS_OPEN` / `SUPCS_PENDING`）なら取り下げとして `SUPCS_CANCELLED` にし、`resolutionEnumId = SUPRES_WITHDRAWN` を設定する。担当者への通知は S7 以降または運用設定で追加する。
 - `externalId` は冪等キー。同じ `externalId` の作成・返信は既存の結果を返す。
 
 ### 6.3 REST の契約
@@ -568,7 +569,7 @@ SUPCS_CANCELLED → （終端）
 
 ### 7.2 実装
 
-- `getSupportMetrics`（`SupportCaseServices.getSupportMetrics`）は、キュー・担当・商品・種別・契約の `EntityQuery` 条件でケースを取得し、期間内の受付・解決・クローズ、期間末時点の未解決・期限超過、応答／解決時間、SLA、CSAT を Java で集計する。現在のケース件数を前提にした実装で、大量データ時の SQL 集計（`EntityFunction`）への置き換えは S6 以降の課題とする。
+- `getSupportMetrics`（`SupportCaseServices.getSupportMetrics`）は、キュー・担当・商品・種別・契約の `EntityQuery` 条件でケースを取得し、期間内の受付・解決・クローズ、期間末時点の未解決・期限超過、応答／解決時間、SLA、CSAT を Java で集計する。現在のケース件数を前提にした実装で、大量データ時の SQL 集計（`EntityFunction`）への置き換えは S7 以降の課題とする。
 - 未解決は「`openedAt` が期間末以前で、`resolvedAt` / `closedAt` が期間末より後または未設定」のケースとする。期限超過は期間末（未来指定時は現在）時点で一次応答期限または解決期限を過ぎ、未応答・未解決のケースとする。一次応答の自動受付は `firstResponseAt` を更新しないため平均から除外される。
 - 内訳はキュー・担当者・種別・商品ごとに受付・未解決・期限超過を返す。担当者は `PartyNameView`、キューは `SupportQueue`、種別は `Enumeration`、商品は `Product` から表示名を解決する。該当なしは `-` と表示する。
 - 画面は `SupportDashboard`（`/support/control/SupportDashboard`）に表形式で表示する。期間・キュー・担当・商品・種別で絞り込める。`SUPPORT_REPORT_VIEW` または `SUPPORT_ADMIN` が必要。
@@ -604,6 +605,7 @@ SUPCS_CANCELLED → （終端）
 | `createSupportCaseTask` | タスク作成 |
 | `SupportDashboard` | 集計（ダッシュボード） |
 | `SupportMetricsCsv` | 集計の CSV 出力 |
+| `FindSupportAuditLog` | 監査ログ |
 | `FindSupportQueue` / `EditSupportQueue` | キュー管理 |
 | `FindSupportSla` / `EditSupportSla` | SLA 管理 |
 
@@ -637,9 +639,11 @@ SUPCS_CANCELLED → （終端）
 
 ### 9.3 監査・保存
 
-- ケースの作成・更新・割当・状態変更・閲覧・添付ダウンロードを監査ログに記録する。efinance の `EfAuditLog` と形式を揃えるか、support の `SupportAuditLog` を用意する（S6 で決定）。
-- 保存期間は `support.retention.days`。削除は論理削除を基本とし、監査ログを残す。
-- 個人情報のマスク（メールアドレス・電話番号・口座情報など）を、権限に応じて行う。
+- **決定**：efinance の `EfAuditLog` への統合は efinance の実装待ちのため、S6 では support 専用の `SupportAuditLog` を使う。ケースの作成・更新・割当・状態変更・閲覧、添付のアップロード・ダウンロード、論理削除・匿名化・保存期間バッチを記録する。監査行にはメッセージ本文・メールアドレス・電話番号を保存せず、ID・操作・変更項目名・安全な概要だけを保存する。閲覧は `FindSupportAuditLog` と `findSupportAuditLogs`（`SUPPORT_AUDIT_VIEW` / `SUPPORT_ADMIN`）で確認できる。
+- 保存期間は `support.retention.days`、動作は `support.retention.mode`（`DELETE` = 論理削除、`ANONYMIZE` = 匿名化）。`applySupportRetention` は期限を過ぎたクローズ／取消ケースを処理し、監査ログは残す。手動の `deleteSupportCase` / `anonymizeSupportCase` も用意する。論理削除されたケースは一覧・詳細・API・集計から除外する。
+- 個人情報のマスク（メールアドレス・電話番号・口座情報など）は `SupportDataMasker` に集約する。顧客 API はメッセージの `fromString` / `toString` / `partyIdFrom` / `partyIdTo` を返さない。監査ログの概要はマスク済みの安全な文字列だけを使う。
+- 添付は `getSupportAttachment`（スタッフ）／`downloadSupportAttachment`（顧客 API）で、ケースと可視メッセージのリンクを確認してからメタデータ・テキストを返す。`DataResource` の URL は直接返さない。バイナリのストリーム配信は efinance / content 層に委ねる。
+- **DB 変更**：`SupportCase` に `isDeleted` / `deletedAt` / `deletedByUserLogin` / `anonymizedAt` を追加し、`SupportAuditLog` テーブルを新設した。新規 DB は OFBiz の entity 作成でよいが、既存 DB では同等の列追加（NULL 可）が必要。既存行の `isDeleted` が NULL の場合は未削除として扱う。
 
 ---
 
@@ -654,6 +658,9 @@ SUPCS_CANCELLED → （終端）
 | `SupportRoutingTests` | キュー決定・最少負荷・容量・フォールバック |
 | `SupportSlaTests` | SLA 選択・期限計算・顧客待ち・エスカレーション・タスクの冪等性 |
 | `SupportApiTests` | 所有確認・内部情報の非公開・冪等性・選択肢の制限 |
+| `SupportReportTests` | 集計・CSAT・CSV 行・期間境界・レポート権限 |
+| `SupportAuditTests` | 監査、論理削除、保存期間、匿名化、マスク、添付アクセス |
+| `SupportAdminTests` | キュー・メンバー・SLA の管理 CRUD |
 
 ### 10.2 検証コマンド
 
@@ -690,6 +697,7 @@ SUPCS_CANCELLED → （終端）
 | `CommunicationEventServices.sendCommEventAsEmail` に親の `messageId` を渡す（任意） | 返信メールに `In-Reply-To` / `References` を付け、外部メールクライアントでもスレッドにする | すべての `CommunicationEvent` のメール返信に影響。DB 変更なし | support 専用の送信サービスで `sendMail` を直接呼ぶ | メール送信の単体テスト、`messageId` の保存、受信側の `parentCommEventId` の確認 |
 
 - 上記以外は core 変更を前提としない。変更する場合は、この表に理由・影響・代替・検証を追記する。
+- **S6 の決定**：`sendCommEventAsEmail` の core 変更は行わない。support 内では受信メールの `parentCommEventId` / `origCommEventId` と `[SUP-n]` 件名トークンでスレッドを維持する。外部メールクライアントの `In-Reply-To` / `References` は S7 以降の課題とする。
 - `finance` は変更しない。契約・タスク・営業日カレンダーの公開サービスを呼ぶだけにする。
 
 ---
@@ -697,7 +705,7 @@ SUPCS_CANCELLED → （終端）
 ## 12. 未決事項
 
 1. 顧客 API の REST 公開時期と経路（`/support` を有効化するか、efinance の `/efinance/support` に集約するか）
-2. `sendCommEventAsEmail` の core 修正の可否（A/B の選択）
+2. `sendCommEventAsEmail` の `In-Reply-To` / `References` 対応（S6 では core 変更を見送り）
 3. SLA を営業時間単位にするか、初期は営業日単位か
 4. 関係者（RM）単位の割当て（`FIN_CTR_ROLE` の追加 or core `PartyRelationship`）
 5. 重複ケースの統合・関連付け
@@ -705,8 +713,8 @@ SUPCS_CANCELLED → （終端）
 7. 解決後の自動クローズ（例：7 日）
 8. 添付の最大サイズ・許可する種類・ウイルス対策
 9. 全文検索・FAQ・AI 回答（efinance W9）との連携
-10. 保存期間・削除・匿名化の具体値（法務確認）
-11. 監査ログを efinance の `EfAuditLog` に統合するか、support 専用にするか
+10. 保存期間・削除・匿名化の具体値（法務確認。S6 の既定は 2555 日・DELETE）
+11. 監査ログを efinance の `EfAuditLog` に統合するか（S6 は support 専用 `SupportAuditLog` で実装）
 
 ---
 
@@ -715,3 +723,4 @@ SUPCS_CANCELLED → （終端）
 | 日付 | 内容 |
 |------|------|
 | 2026-10-20 | 初版（要件・仕様の設計）。`plugins/support` 新設、`support → finance`、顧客ポータルは API まで、`EfServiceRequest` とは分離、という方針を確定 |
+| 2026-10-21 | S6 実装。`SupportAuditLog`、論理削除・保存期間・匿名化、マスク、添付アクセス、監査／キュー／SLA 画面、ジョブ seed を追加。42 テスト成功（seed 111 行） |

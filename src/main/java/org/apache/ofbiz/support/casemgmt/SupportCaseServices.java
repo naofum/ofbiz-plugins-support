@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +46,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
+import org.apache.ofbiz.support.audit.SupportAuditServices;
 import org.apache.ofbiz.support.sla.SupportSlaCalculator;
 
 /**
@@ -77,6 +79,11 @@ public final class SupportCaseServices {
         return userLogin == null ? "system" : userLogin.getString("userLoginId");
     }
 
+    private static String getAuditChannel(Map<String, Object> context) {
+        String channel = getString(context, "auditChannelEnumId");
+        return UtilValidate.isEmpty(channel) ? SupportAuditServices.CHANNEL_STAFF : channel;
+    }
+
     private static GenericValue getUserLogin(Delegator delegator, Map<String, Object> context)
             throws GenericEntityException {
         GenericValue userLogin = (GenericValue) context.get("userLogin");
@@ -91,12 +98,20 @@ public final class SupportCaseServices {
         return UtilProperties.getMessage(RESOURCE, key, locale);
     }
 
+    private static EntityCondition notDeletedCondition() {
+        return EntityCondition.makeCondition(EntityOperator.OR,
+                EntityCondition.makeCondition("isDeleted", EntityOperator.EQUALS, null),
+                EntityCondition.makeCondition("isDeleted", "N"));
+    }
+
     private static GenericValue findCase(Delegator delegator, String supportCaseId) throws GenericEntityException {
         if (UtilValidate.isEmpty(supportCaseId)) {
             return null;
         }
         return EntityQuery.use(delegator).from("SupportCase")
-                .where("supportCaseId", supportCaseId).queryOne();
+                .where(EntityCondition.makeCondition(EntityOperator.AND,
+                        EntityCondition.makeCondition("supportCaseId", supportCaseId), notDeletedCondition()))
+                .queryOne();
     }
 
     private static void createStatusHistory(Delegator delegator, String supportCaseId, String statusId,
@@ -241,7 +256,8 @@ public final class SupportCaseServices {
                     .where(EntityCondition.makeCondition(EntityOperator.AND,
                             EntityCondition.makeCondition("assigneePartyId", member.getString("partyId")),
                             EntityCondition.makeCondition("statusId", EntityOperator.IN,
-                                    List.of(STATUS_NEW, STATUS_OPEN, "SUPCS_PENDING"))))
+                                    List.of(STATUS_NEW, STATUS_OPEN, "SUPCS_PENDING")),
+                            notDeletedCondition()))
                     .queryCount();
             if (member.get("capacity") != null && openCases >= member.getLong("capacity")) {
                 continue;
@@ -336,9 +352,12 @@ public final class SupportCaseServices {
             supportCase.set("lastModifiedDate", now);
             supportCase.set("createdByUserLogin", userLoginId);
             supportCase.set("lastModifiedByUserLogin", userLoginId);
+            supportCase.set("isDeleted", "N");
             applySla(delegator, supportCase);
             supportCase.create();
             createStatusHistory(delegator, supportCaseId, STATUS_NEW, now, userLoginId, null);
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_CREATE,
+                    getAuditChannel(context), null, "Case created", null);
             Map<String, Object> result = ServiceUtil.returnSuccess(message(locale, "SupportCaseCreated"));
             result.put("supportCaseId", supportCaseId);
             return result;
@@ -356,14 +375,23 @@ public final class SupportCaseServices {
             if (supportCase == null) {
                 return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
             }
+            List<String> changedFields = new ArrayList<>();
             for (String field : new String[] {"caseTypeEnumId", "priority", "severity", "customerPartyId",
                     "financeContractId", "applicationTypeId", "applicationId", "productId", "subject",
                     "description", "sourceEnumId", "assigneePartyId", "queueId", "resolutionEnumId"}) {
+                if (context.containsKey(field) && !Objects.equals(supportCase.get(field), context.get(field))) {
+                    changedFields.add(field);
+                }
                 setIfPresent(supportCase, context, field);
             }
             supportCase.set("lastModifiedDate", UtilDateTime.nowTimestamp());
             supportCase.set("lastModifiedByUserLogin", getUserLoginId(context));
             supportCase.store();
+            if (!changedFields.isEmpty()) {
+                SupportAuditServices.record(delegator, context, supportCaseId,
+                        SupportAuditServices.ACTION_UPDATE, getAuditChannel(context), null, "Case updated",
+                        String.join(",", changedFields));
+            }
             return ServiceUtil.returnSuccess(message(locale, "SupportCaseUpdated"));
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.getMessage());
@@ -395,6 +423,10 @@ public final class SupportCaseServices {
                     member.store();
                 }
             }
+            String assignment = "queue=" + (queueId == null ? "" : queueId)
+                    + ", assignee=" + (assigneePartyId == null ? "" : assigneePartyId);
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_ASSIGN,
+                    getAuditChannel(context), null, assignment, null);
             return ServiceUtil.returnSuccess(message(locale, "SupportCaseAssigned"));
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.getMessage());
@@ -472,6 +504,8 @@ public final class SupportCaseServices {
             supportCase.set("lastModifiedByUserLogin", userLoginId);
             supportCase.store();
             createStatusHistory(delegator, supportCaseId, statusId, now, userLoginId, note);
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_STATUS,
+                    getAuditChannel(context), null, "status " + oldStatusId + " -> " + statusId, null);
             return ServiceUtil.returnSuccess(message(locale, "SupportCaseStatusChanged"));
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.getMessage());
@@ -594,7 +628,8 @@ public final class SupportCaseServices {
             EntityCondition overdue = EntityCondition.makeCondition(EntityOperator.OR,
                     firstResponseOverdue, resolutionOverdue);
             List<GenericValue> cases = EntityQuery.use(delegator).from("SupportCase")
-                    .where(EntityCondition.makeCondition(EntityOperator.AND, openStatus, overdue))
+                    .where(EntityCondition.makeCondition(EntityOperator.AND, openStatus, overdue,
+                            notDeletedCondition()))
                     .orderBy("openedAt").queryList();
             long repeatMinutes = (long) UtilProperties.getPropertyNumber("support",
                     "support.escalation.repeatMinutes", 1440);
@@ -652,6 +687,8 @@ public final class SupportCaseServices {
                     .where("supportCaseId", supportCaseId)
                     .orderBy("addedDate")
                     .queryList();
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_VIEW,
+                    getAuditChannel(context), null, "Case viewed", null);
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("supportCase", supportCase);
             result.put("supportCaseStatuses", statuses);
@@ -1152,6 +1189,8 @@ public final class SupportCaseServices {
             createContext.put("subject", subject);
             createContext.put("description", getString(context, "description"));
             createContext.put("externalId", externalId);
+            createContext.put("auditChannelEnumId", SupportAuditServices.CHANNEL_API);
+            createContext.put("auditActorPartyId", customerPartyId);
             Map<String, Object> createResult = dispatcher.runSync("createSupportCase", createContext);
             if (ServiceUtil.isError(createResult)) {
                 return createResult;
@@ -1179,6 +1218,7 @@ public final class SupportCaseServices {
         try {
             List<EntityCondition> conditions = new ArrayList<>();
             conditions.add(EntityCondition.makeCondition("customerPartyId", customerPartyId));
+            conditions.add(notDeletedCondition());
             addEquals(conditions, "financeContractId", getString(context, "financeContractId"));
             addEquals(conditions, "productId", getString(context, "productId"));
             Object statusIds = context.get("statusIds");
@@ -1231,11 +1271,18 @@ public final class SupportCaseServices {
                         @SuppressWarnings("unchecked")
                         Map<String, Object> message = (Map<String, Object>) item;
                         if (!"Y".equals(message.get("isInternal"))) {
-                            visibleMessages.add(message);
+                            Map<String, Object> visible = new HashMap<>(message);
+                            visible.remove("partyIdFrom");
+                            visible.remove("partyIdTo");
+                            visible.remove("fromString");
+                            visible.remove("toString");
+                            visibleMessages.add(visible);
                         }
                     }
                 }
             }
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_VIEW,
+                    SupportAuditServices.CHANNEL_API, null, "Case viewed via customer API", null);
             String statusId = supportCase.getString("statusId");
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("supportCase", caseSummary(supportCase));
@@ -1336,6 +1383,8 @@ public final class SupportCaseServices {
             supportCase.set("lastModifiedDate", now);
             supportCase.set("lastModifiedByUserLogin", customerPartyId);
             supportCase.store();
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_UPDATE,
+                    SupportAuditServices.CHANNEL_API, communicationEventId, "Customer reply", null);
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("communicationEventId", communicationEventId);
             result.put("statusId", supportCase.getString("statusId"));
@@ -1364,6 +1413,7 @@ public final class SupportCaseServices {
             Map<String, Object> statusContext = new HashMap<>(context);
             statusContext.put("supportCaseId", supportCaseId);
             statusContext.put("note", getString(context, "reason"));
+            statusContext.put("auditChannelEnumId", SupportAuditServices.CHANNEL_API);
             Map<String, Object> statusResult;
             if (STATUS_RESOLVED.equals(statusId)) {
                 statusResult = changeStatus(dctx, statusContext, STATUS_CLOSED, null, getString(context, "reason"));
@@ -1411,6 +1461,8 @@ public final class SupportCaseServices {
             supportCase.set("lastModifiedDate", UtilDateTime.nowTimestamp());
             supportCase.set("lastModifiedByUserLogin", customerPartyId);
             supportCase.store();
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_UPDATE,
+                    SupportAuditServices.CHANNEL_API, null, "Customer rating", "satisfactionScore");
             return ServiceUtil.returnSuccess();
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.getMessage());
@@ -1539,6 +1591,8 @@ public final class SupportCaseServices {
             assoc.set("fromDate", UtilDateTime.nowTimestamp());
             assoc.set("sequenceNum", BigDecimal.ONE);
             assoc.create();
+            SupportAuditServices.record(delegator, context, supportCaseId, SupportAuditServices.ACTION_UPLOAD,
+                    SupportAuditServices.CHANNEL_API, contentId, "Attachment uploaded", null);
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("contentId", contentId);
             return result;
@@ -1689,6 +1743,7 @@ public final class SupportCaseServices {
     public static Map<String, Object> findSupportCases(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         List<EntityCondition> conditions = new ArrayList<>();
+        conditions.add(notDeletedCondition());
         addEquals(conditions, "supportCaseId", getString(context, "supportCaseId"));
         addEquals(conditions, "customerPartyId", getString(context, "customerPartyId"));
         addEquals(conditions, "statusId", getString(context, "statusId"));
@@ -1725,6 +1780,7 @@ public final class SupportCaseServices {
         Timestamp asOf = thruDate.after(now) ? now : thruDate;
         try {
             List<EntityCondition> conditions = new ArrayList<>();
+            conditions.add(notDeletedCondition());
             addEquals(conditions, "queueId", getString(context, "queueId"));
             addEquals(conditions, "assigneePartyId", getString(context, "assigneePartyId"));
             addEquals(conditions, "productId", getString(context, "productId"));

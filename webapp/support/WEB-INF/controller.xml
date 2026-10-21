@@ -39,6 +39,11 @@ under the License.
         <response name="success" type="view" value="SupportMetricsCsv"/>
     </request-map>
 
+    <request-map uri="FindSupportAuditLog">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="FindSupportAuditLog"/>
+    </request-map>
+
     <request-map uri="FindSupportCase">
         <security https="true" auth="true"/>
         <response name="success" type="view" value="FindSupportCase"/>
@@ -135,6 +140,107 @@ under the License.
         <response name="error" type="view" value="ViewSupportCase"/>
     </request-map>
 
+    <request-map uri="FindSupportQueue">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="FindSupportQueue"/>
+    </request-map>
+
+    <request-map uri="EditSupportQueue">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="createSupportQueue">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="createSupportQueue"/>
+        <response name="success" type="request-redirect" value="EditSupportQueue">
+            <redirect-parameter name="queueId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="updateSupportQueue">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="updateSupportQueue"/>
+        <response name="success" type="request-redirect" value="EditSupportQueue">
+            <redirect-parameter name="queueId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="createSupportQueueMember">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="createSupportQueueMember"/>
+        <response name="success" type="request-redirect" value="EditSupportQueue">
+            <redirect-parameter name="queueId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="updateSupportQueueMember">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="updateSupportQueueMember"/>
+        <response name="success" type="request-redirect" value="EditSupportQueue">
+            <redirect-parameter name="queueId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="removeSupportQueueMember">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="removeSupportQueueMember"/>
+        <response name="success" type="request-redirect" value="EditSupportQueue">
+            <redirect-parameter name="queueId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="createSupportQueueProduct">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="createSupportQueueProduct"/>
+        <response name="success" type="request-redirect" value="EditSupportQueue">
+            <redirect-parameter name="queueId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="removeSupportQueueProduct">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="removeSupportQueueProduct"/>
+        <response name="success" type="request-redirect" value="EditSupportQueue">
+            <redirect-parameter name="queueId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportQueue"/>
+    </request-map>
+
+    <request-map uri="FindSupportSla">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="FindSupportSla"/>
+    </request-map>
+
+    <request-map uri="EditSupportSla">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="EditSupportSla"/>
+    </request-map>
+
+    <request-map uri="createSupportSla">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="createSupportSla"/>
+        <response name="success" type="request-redirect" value="EditSupportSla">
+            <redirect-parameter name="slaId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportSla"/>
+    </request-map>
+
+    <request-map uri="updateSupportSla">
+        <security https="true" auth="true"/>
+        <event type="service" invoke="updateSupportSla"/>
+        <response name="success" type="request-redirect" value="EditSupportSla">
+            <redirect-parameter name="slaId"/>
+        </response>
+        <response name="error" type="view" value="EditSupportSla"/>
+    </request-map>
+
     <request-map uri="LookupPartyName">
         <security https="true" auth="true"/>
         <response name="success" type="view" value="LookupPartyName"/>
@@ -144,6 +250,11 @@ under the License.
     <view-map name="SupportDashboard" type="screen" page="component://support/widget/SupportScreens.xml#SupportDashboard"/>
     <view-map name="SupportMetricsCsv" type="screencsv" page="component://support/widget/SupportScreens.xml#SupportMetricsCsv"
               content-type="text/csv" encoding="UTF-8"/>
+    <view-map name="FindSupportAuditLog" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportAuditLog"/>
+    <view-map name="FindSupportQueue" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportQueue"/>
+    <view-map name="EditSupportQueue" type="screen" page="component://support/widget/SupportScreens.xml#EditSupportQueue"/>
+    <view-map name="FindSupportSla" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportSla"/>
+    <view-map name="EditSupportSla" type="screen" page="component://support/widget/SupportScreens.xml#EditSupportSla"/>
     <view-map name="FindSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportCase"/>
     <view-map name="ViewSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#ViewSupportCase"/>
     <view-map name="EditSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#EditSupportCase"/>

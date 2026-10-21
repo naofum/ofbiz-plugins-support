@@ -387,4 +387,239 @@ under the License.
         <field name="value" title="${uiLabelMap.SupportCsvValue}"><display/></field>
     </form>
 
+    <form name="FindSupportAuditLog" type="single" target="FindSupportAuditLog" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="supportCaseId" title="${uiLabelMap.SupportAuditCase}"><text size="20" maxlength="20"/></field>
+        <field name="actionEnumId" title="${uiLabelMap.SupportAuditAction}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_AUDIT_ACTION"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="actorUserLoginId" title="${uiLabelMap.SupportAuditActor}"><text size="20" maxlength="60"/></field>
+        <field name="fromDate" title="${uiLabelMap.SupportFromDate}"><date-time type="date"/></field>
+        <field name="thruDate" title="${uiLabelMap.SupportThruDate}"><date-time type="date"/></field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="ListSupportAuditLogs" type="list" list-name="auditLogs" target="" title=""
+          view-size="50" paginate="false" odd-row-style="alternate-row"
+          header-row-style="header-row-2" default-table-style="basic-table hover-bar">
+        <field name="actionDate" title="${uiLabelMap.SupportAuditDate}"><display type="date-time"/></field>
+        <field name="supportCaseId" title="${uiLabelMap.SupportAuditCase}">
+            <hyperlink target="ViewSupportCase" description="${supportCaseId}">
+                <parameter param-name="supportCaseId"/>
+            </hyperlink>
+        </field>
+        <field name="actionEnumId" title="${uiLabelMap.SupportAuditAction}">
+            <display-entity entity-name="Enumeration" key-field-name="enumId" description="${description}"/>
+        </field>
+        <field name="channelEnumId" title="${uiLabelMap.SupportAuditChannel}">
+            <display-entity entity-name="Enumeration" key-field-name="enumId" description="${description}"/>
+        </field>
+        <field name="actorUserLoginId" title="${uiLabelMap.SupportAuditActor}"><display/></field>
+        <field name="summary" title="${uiLabelMap.SupportAuditSummary}"><display/></field>
+        <field name="changedFields" title="${uiLabelMap.SupportAuditChangedFields}"><display/></field>
+    </form>
+
+    <!-- Queue administration -->
+    <form name="ListSupportQueues" type="list" list-name="queues" target="" title=""
+          view-size="50" paginate="false" odd-row-style="alternate-row"
+          header-row-style="header-row-2" default-table-style="basic-table hover-bar">
+        <field name="queueId" title="${uiLabelMap.SupportQueueId}">
+            <hyperlink target="EditSupportQueue" description="${queueId}">
+                <parameter param-name="queueId"/>
+            </hyperlink>
+        </field>
+        <field name="queueName" title="${uiLabelMap.SupportQueueName}"><display/></field>
+        <field name="assignStrategyEnumId" title="${uiLabelMap.SupportAssignStrategy}">
+            <display-entity entity-name="Enumeration" key-field-name="enumId" description="${description}"/>
+        </field>
+        <field name="managerPartyId" title="${uiLabelMap.SupportQueueManager}">
+            <display-entity entity-name="PartyNameView" key-field-name="partyId" description="${firstName} ${lastName} ${groupName}"/>
+        </field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><display/></field>
+    </form>
+
+    <form name="CreateSupportQueue" type="single" target="createSupportQueue" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="queueId" title="${uiLabelMap.SupportQueueId}"><text size="20" maxlength="20"/></field>
+        <field name="queueName" title="${uiLabelMap.SupportQueueName}"><text size="40" maxlength="100"/></field>
+        <field name="description" title="${uiLabelMap.SupportSlaDescription}"><text size="60" maxlength="255"/></field>
+        <field name="assignStrategyEnumId" title="${uiLabelMap.SupportAssignStrategy}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_ASSIGN"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="managerPartyId" title="${uiLabelMap.SupportQueueManager}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><check/></field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="EditSupportQueue" type="single" target="updateSupportQueue" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="queueId" title="${uiLabelMap.SupportQueueId}"><hidden/></field>
+        <field name="queueName" title="${uiLabelMap.SupportQueueName}"><text size="40" maxlength="100"/></field>
+        <field name="description" title="${uiLabelMap.SupportSlaDescription}"><text size="60" maxlength="255"/></field>
+        <field name="assignStrategyEnumId" title="${uiLabelMap.SupportAssignStrategy}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_ASSIGN"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="managerPartyId" title="${uiLabelMap.SupportQueueManager}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><check/></field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="CreateSupportQueueMember" type="single" target="createSupportQueueMember" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="queueId" title="${uiLabelMap.SupportQueueId}"><hidden/></field>
+        <field name="partyId" title="${uiLabelMap.SupportQueueMember}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="capacity" title="${uiLabelMap.SupportCapacity}"><text size="6" maxlength="6"/></field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><check/></field>
+        <field name="submitButton" title="${uiLabelMap.SupportAddMember}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="ListSupportQueueMembers" type="list" list-name="queueMembers" target="" title=""
+          view-size="50" paginate="false" odd-row-style="alternate-row"
+          header-row-style="header-row-2" default-table-style="basic-table hover-bar">
+        <field name="queueId" title="${uiLabelMap.SupportQueueId}"><hidden/></field>
+        <field name="partyId" title="${uiLabelMap.SupportQueueMember}">
+            <display-entity entity-name="PartyNameView" key-field-name="partyId" description="${firstName} ${lastName} ${groupName}"/>
+        </field>
+        <field name="capacity" title="${uiLabelMap.SupportCapacity}"><display/></field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><display/></field>
+        <field name="removeButton" title="${uiLabelMap.SupportRemoveMember}">
+            <hyperlink target="removeSupportQueueMember" description="${uiLabelMap.SupportRemoveMember}">
+                <parameter param-name="queueId"/>
+                <parameter param-name="partyId"/>
+            </hyperlink>
+        </field>
+    </form>
+
+    <form name="ListSupportQueueProducts" type="list" list-name="queueProducts" target="" title=""
+          view-size="50" paginate="false" odd-row-style="alternate-row"
+          header-row-style="header-row-2" default-table-style="basic-table hover-bar">
+        <field name="supportQueueProductId" title="${uiLabelMap.SupportQueueProductId}"><display/></field>
+        <field name="productId" title="${uiLabelMap.SupportProduct}"><display/></field>
+        <field name="financialProductTypeId" title="${uiLabelMap.SupportFinancialProductType}"><display/></field>
+        <field name="contractTypeId" title="${uiLabelMap.SupportContractType}"><display/></field>
+        <field name="sequenceNum" title="${uiLabelMap.SupportSlaSequence}"><display/></field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><display/></field>
+        <field name="removeButton" title="${uiLabelMap.SupportRemoveMember}">
+            <hyperlink target="removeSupportQueueProduct" description="${uiLabelMap.SupportRemoveMember}">
+                <parameter param-name="supportQueueProductId"/>
+                <parameter param-name="queueId"/>
+            </hyperlink>
+        </field>
+    </form>
+
+    <form name="CreateSupportQueueProduct" type="single" target="createSupportQueueProduct" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="supportQueueProductId" title="${uiLabelMap.SupportQueueProductId}"><text size="20" maxlength="20"/></field>
+        <field name="queueId" title="${uiLabelMap.SupportQueueId}"><hidden/></field>
+        <field name="productId" title="${uiLabelMap.SupportProduct}"><text size="20" maxlength="20"/></field>
+        <field name="financialProductTypeId" title="${uiLabelMap.SupportFinancialProductType}"><text size="20" maxlength="20"/></field>
+        <field name="contractTypeId" title="${uiLabelMap.SupportContractType}"><text size="20" maxlength="20"/></field>
+        <field name="sequenceNum" title="${uiLabelMap.SupportSlaSequence}"><text size="6" maxlength="6"/></field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><check/></field>
+        <field name="submitButton" title="${uiLabelMap.SupportProductMapping}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <!-- SLA administration -->
+    <form name="ListSupportSlas" type="list" list-name="slas" target="" title=""
+          view-size="50" paginate="false" odd-row-style="alternate-row"
+          header-row-style="header-row-2" default-table-style="basic-table hover-bar">
+        <field name="slaId" title="${uiLabelMap.SupportSlaId}">
+            <hyperlink target="EditSupportSla" description="${slaId}">
+                <parameter param-name="slaId"/>
+            </hyperlink>
+        </field>
+        <field name="description" title="${uiLabelMap.SupportSlaDescription}"><display/></field>
+        <field name="firstResponseMinutes" title="${uiLabelMap.SupportSlaFirstResponse}"><display/></field>
+        <field name="resolutionMinutes" title="${uiLabelMap.SupportSlaResolution}"><display/></field>
+        <field name="businessCalendarId" title="${uiLabelMap.SupportSlaCalendar}"><display/></field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><display/></field>
+    </form>
+
+    <form name="CreateSupportSla" type="single" target="createSupportSla" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="slaId" title="${uiLabelMap.SupportSlaId}"><text size="20" maxlength="20"/></field>
+        <field name="description" title="${uiLabelMap.SupportSlaDescription}"><text size="60" maxlength="255"/></field>
+        <field name="productId" title="${uiLabelMap.SupportProduct}"><text size="20" maxlength="20"/></field>
+        <field name="financialProductTypeId" title="${uiLabelMap.SupportFinancialProductType}"><text size="20" maxlength="20"/></field>
+        <field name="contractTypeId" title="${uiLabelMap.SupportContractType}"><text size="20" maxlength="20"/></field>
+        <field name="priority" title="${uiLabelMap.SupportPriority}"><text size="4" maxlength="4"/></field>
+        <field name="sourceEnumId" title="${uiLabelMap.SupportSlaSource}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_SOURCE"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="fromDate" title="${uiLabelMap.SupportFromDate}"><date-time type="date"/></field>
+        <field name="thruDate" title="${uiLabelMap.SupportThruDate}"><date-time type="date"/></field>
+        <field name="firstResponseMinutes" title="${uiLabelMap.SupportSlaFirstResponse}"><text size="8" maxlength="8"/></field>
+        <field name="resolutionMinutes" title="${uiLabelMap.SupportSlaResolution}"><text size="8" maxlength="8"/></field>
+        <field name="businessCalendarId" title="${uiLabelMap.SupportSlaCalendar}"><text size="20" maxlength="20"/></field>
+        <field name="sequenceNum" title="${uiLabelMap.SupportSlaSequence}"><text size="6" maxlength="6"/></field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><check/></field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="EditSupportSla" type="single" target="updateSupportSla" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="slaId" title="${uiLabelMap.SupportSlaId}"><hidden/></field>
+        <field name="description" title="${uiLabelMap.SupportSlaDescription}"><text size="60" maxlength="255"/></field>
+        <field name="productId" title="${uiLabelMap.SupportProduct}"><text size="20" maxlength="20"/></field>
+        <field name="financialProductTypeId" title="${uiLabelMap.SupportFinancialProductType}"><text size="20" maxlength="20"/></field>
+        <field name="contractTypeId" title="${uiLabelMap.SupportContractType}"><text size="20" maxlength="20"/></field>
+        <field name="priority" title="${uiLabelMap.SupportPriority}"><text size="4" maxlength="4"/></field>
+        <field name="sourceEnumId" title="${uiLabelMap.SupportSlaSource}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_SOURCE"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="fromDate" title="${uiLabelMap.SupportFromDate}"><date-time type="date"/></field>
+        <field name="thruDate" title="${uiLabelMap.SupportThruDate}"><date-time type="date"/></field>
+        <field name="firstResponseMinutes" title="${uiLabelMap.SupportSlaFirstResponse}"><text size="8" maxlength="8"/></field>
+        <field name="resolutionMinutes" title="${uiLabelMap.SupportSlaResolution}"><text size="8" maxlength="8"/></field>
+        <field name="businessCalendarId" title="${uiLabelMap.SupportSlaCalendar}"><text size="20" maxlength="20"/></field>
+        <field name="sequenceNum" title="${uiLabelMap.SupportSlaSequence}"><text size="6" maxlength="6"/></field>
+        <field name="active" title="${uiLabelMap.SupportActive}"><check/></field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
 </forms>

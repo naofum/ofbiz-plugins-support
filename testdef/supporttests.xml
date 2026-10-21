@@ -38,4 +38,12 @@ under the License.
         <junit-test-suite class-name="org.apache.ofbiz.support.test.SupportReportTests"/>
     </test-case>
 
+    <test-case case-name="support-audit-tests">
+        <junit-test-suite class-name="org.apache.ofbiz.support.test.SupportAuditTests"/>
+    </test-case>
+
+    <test-case case-name="support-admin-tests">
+        <junit-test-suite class-name="org.apache.ofbiz.support.test.SupportAdminTests"/>
+    </test-case>
+
 </test-suite>
