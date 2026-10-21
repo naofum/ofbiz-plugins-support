@@ -29,6 +29,16 @@ under the License.
         <response name="success" type="view" value="FindSupportCase"/>
     </request-map>
 
+    <request-map uri="SupportDashboard">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="SupportDashboard"/>
+    </request-map>
+
+    <request-map uri="SupportMetricsCsv">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="SupportMetricsCsv"/>
+    </request-map>
+
     <request-map uri="FindSupportCase">
         <security https="true" auth="true"/>
         <response name="success" type="view" value="FindSupportCase"/>
@@ -131,6 +141,9 @@ under the License.
     </request-map>
 
     <view-map name="main" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportCase"/>
+    <view-map name="SupportDashboard" type="screen" page="component://support/widget/SupportScreens.xml#SupportDashboard"/>
+    <view-map name="SupportMetricsCsv" type="screencsv" page="component://support/widget/SupportScreens.xml#SupportMetricsCsv"
+              content-type="text/csv" encoding="UTF-8"/>
     <view-map name="FindSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#FindSupportCase"/>
     <view-map name="ViewSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#ViewSupportCase"/>
     <view-map name="EditSupportCase" type="screen" page="component://support/widget/SupportScreens.xml#EditSupportCase"/>

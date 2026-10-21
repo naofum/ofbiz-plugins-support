@@ -91,6 +91,7 @@ under the License.
     <SecurityPermission permissionId="SUPPORT_API_VIEW" description="View own support cases through the customer API"/>
     <SecurityPermission permissionId="SUPPORT_API_CREATE" description="Create support cases through the customer API"/>
     <SecurityPermission permissionId="SUPPORT_API_UPDATE" description="Reply, close and rate own support cases through the customer API"/>
+    <SecurityPermission permissionId="SUPPORT_REPORT_VIEW" description="View support reports and metrics"/>
 
     <SecurityGroup groupId="SUPPORT_AGENT" groupName="Support Agent" description="Support agent group"/>
     <SecurityGroup groupId="SUPPORT_MANAGER" groupName="Support Manager" description="Support manager group"/>
@@ -106,6 +107,8 @@ under the License.
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_CREATE" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_UPDATE" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_DELETE" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_REPORT_VIEW" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPER" permissionId="SUPPORT_REPORT_VIEW" fromDate="2026-10-20 00:00:00.0"/>
 
     <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API_VIEW" fromDate="2026-10-20 00:00:00.0"/>

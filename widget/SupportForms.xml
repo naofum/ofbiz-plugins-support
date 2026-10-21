@@ -296,4 +296,95 @@ under the License.
         </field>
     </form>
 
+    <form name="FindSupportMetrics" type="single" target="SupportDashboard" default-map-name="parameters"
+          header-row-style="header-row" default-table-style="basic-table">
+        <field name="fromDate" title="${uiLabelMap.SupportFromDate}"><date-time type="date"/></field>
+        <field name="thruDate" title="${uiLabelMap.SupportThruDate}"><date-time type="date"/></field>
+        <field name="queueId" title="${uiLabelMap.SupportQueue}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="SupportQueue" key-field-name="queueId" description="${queueName}">
+                    <entity-order-by field-name="queueName"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="assigneePartyId" title="${uiLabelMap.SupportAssignee}">
+            <lookup target-form-name="LookupPartyName"/>
+        </field>
+        <field name="productId" title="${uiLabelMap.SupportProduct}"><text size="20" maxlength="20"/></field>
+        <field name="caseTypeEnumId" title="${uiLabelMap.SupportCaseType}">
+            <drop-down allow-empty="true">
+                <entity-options entity-name="Enumeration" key-field-name="enumId" description="${description}">
+                    <entity-constraint name="enumTypeId" value="SUPPORT_CASE_TYPE"/>
+                    <entity-order-by field-name="sequenceId"/>
+                </entity-options>
+            </drop-down>
+        </field>
+        <field name="submitButton" title="${uiLabelMap.CommonSubmit}" widget-style="smallSubmit">
+            <submit button-type="button"/>
+        </field>
+    </form>
+
+    <form name="SupportMetrics" type="single" default-map-name="metrics" header-row-style="header-row"
+          default-table-style="basic-table">
+        <field name="fromDate" title="${uiLabelMap.SupportFromDate}"><display type="date"/></field>
+        <field name="thruDate" title="${uiLabelMap.SupportThruDate}"><display type="date"/></field>
+        <field name="openedCount" title="${uiLabelMap.SupportOpenedCount}"><display/></field>
+        <field name="resolvedCount" title="${uiLabelMap.SupportResolvedCount}"><display/></field>
+        <field name="closedCount" title="${uiLabelMap.SupportClosedCount}"><display/></field>
+        <field name="unresolvedCount" title="${uiLabelMap.SupportUnresolvedCount}"><display/></field>
+        <field name="overdueCount" title="${uiLabelMap.SupportOverdueCount}"><display/></field>
+        <field name="avgFirstResponseMinutes" title="${uiLabelMap.SupportAvgFirstResponse}"><display/></field>
+        <field name="avgResolutionMinutes" title="${uiLabelMap.SupportAvgResolution}"><display/></field>
+        <field name="slaComplianceRate" title="${uiLabelMap.SupportSlaCompliance}"><display/></field>
+        <field name="csatAverage" title="${uiLabelMap.SupportCsatAverage}"><display/></field>
+        <field name="csatScore1" title="${uiLabelMap.SupportCsatScore1}"><display/></field>
+        <field name="csatScore2" title="${uiLabelMap.SupportCsatScore2}"><display/></field>
+        <field name="csatScore3" title="${uiLabelMap.SupportCsatScore3}"><display/></field>
+        <field name="csatScore4" title="${uiLabelMap.SupportCsatScore4}"><display/></field>
+        <field name="csatScore5" title="${uiLabelMap.SupportCsatScore5}"><display/></field>
+    </form>
+
+    <form name="ListMetricsByQueue" type="list" list-name="byQueue" header-row-style="header-row-2"
+          default-table-style="basic-table hover-bar">
+        <field name="name" title="${uiLabelMap.SupportQueue}"><display/></field>
+        <field name="openedCount" title="${uiLabelMap.SupportOpenedCount}"><display/></field>
+        <field name="unresolvedCount" title="${uiLabelMap.SupportUnresolvedCount}"><display/></field>
+        <field name="overdueCount" title="${uiLabelMap.SupportOverdueCount}"><display/></field>
+    </form>
+
+    <form name="ListMetricsByAssignee" type="list" list-name="byAssignee" header-row-style="header-row-2"
+          default-table-style="basic-table hover-bar">
+        <field name="name" title="${uiLabelMap.SupportAssignee}"><display/></field>
+        <field name="openedCount" title="${uiLabelMap.SupportOpenedCount}"><display/></field>
+        <field name="unresolvedCount" title="${uiLabelMap.SupportUnresolvedCount}"><display/></field>
+        <field name="overdueCount" title="${uiLabelMap.SupportOverdueCount}"><display/></field>
+    </form>
+
+    <form name="ListMetricsByCaseType" type="list" list-name="byCaseType" header-row-style="header-row-2"
+          default-table-style="basic-table hover-bar">
+        <field name="name" title="${uiLabelMap.SupportCaseType}"><display/></field>
+        <field name="openedCount" title="${uiLabelMap.SupportOpenedCount}"><display/></field>
+        <field name="unresolvedCount" title="${uiLabelMap.SupportUnresolvedCount}"><display/></field>
+        <field name="overdueCount" title="${uiLabelMap.SupportOverdueCount}"><display/></field>
+    </form>
+
+    <form name="ListMetricsByProduct" type="list" list-name="byProduct" header-row-style="header-row-2"
+          default-table-style="basic-table hover-bar">
+        <field name="name" title="${uiLabelMap.SupportProduct}"><display/></field>
+        <field name="openedCount" title="${uiLabelMap.SupportOpenedCount}"><display/></field>
+        <field name="unresolvedCount" title="${uiLabelMap.SupportUnresolvedCount}"><display/></field>
+        <field name="overdueCount" title="${uiLabelMap.SupportOverdueCount}"><display/></field>
+    </form>
+
+    <form name="ExportSupportMetricsCsv" type="list" list-name="csvRows" target="" title=""
+          view-size="99999" paginate="false" odd-row-style="alternate-row"
+          header-row-style="header-row-2" default-table-style="basic-table hover-bar">
+        <field name="section" title="${uiLabelMap.SupportCsvSection}"><display/></field>
+        <field name="key" title="${uiLabelMap.SupportCsvKey}"><display/></field>
+        <field name="openedCount" title="${uiLabelMap.SupportOpenedCount}"><display/></field>
+        <field name="unresolvedCount" title="${uiLabelMap.SupportUnresolvedCount}"><display/></field>
+        <field name="overdueCount" title="${uiLabelMap.SupportOverdueCount}"><display/></field>
+        <field name="value" title="${uiLabelMap.SupportCsvValue}"><display/></field>
+    </form>
+
 </forms>

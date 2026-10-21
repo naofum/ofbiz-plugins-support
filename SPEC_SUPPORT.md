@@ -2,7 +2,7 @@
 
 `REQUIREMENTS_SUPPORT.md` の要件に対する設計。各 STEP の実装後に「実装」「テスト」「検証」を追記する。
 
-> **状態：S0/S1/S2/S3/S4 実装済み、S5 以降は設計（未着手）**。2026-10-20 作成。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
+> **状態：S0/S1/S2/S3/S4/S5 実装済み、S6 は設計（未着手）**。2026-10-20 作成、2026-10-21 に S5 を追記。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
 
 ## 進捗
 
@@ -13,7 +13,7 @@
 | S2 | メッセージ・スレッド・自動起票（4 章） | 実装済み（2026-10-20） |
 | S3 | 自動割当・SLA・エスカレーション（5 章） | 実装済み（2026-10-20） |
 | S4 | 顧客ポータル API（6 章） | 実装済み（2026-10-20） |
-| S5 | レポート・分析（7 章） | 設計（未着手） |
+| S5 | レポート・分析（7 章） | 実装済み（2026-10-21） |
 | S6 | 監査・保存・運用・テスト（9〜12 章） | 設計（未着手） |
 
 ### 実装・テスト・検証（2026-10-20）
@@ -23,9 +23,10 @@
 - **S2**：`addSupportCaseMessage` / `addSupportCaseInternalNote` / `replySupportCase` / `getSupportCaseThread` / `routeInboundSupportCommunication` / `linkOrphanInboundSupportEmails`、受信メールの ECA（`createCommunicationEvent` commit）、件名トークン、自動受付返信、ケース詳細のスレッド表示・返信・内部メモを実装した。
 - **S3**：`SupportQueueProduct` によるキューの決定、`SupportQueueMember` の最少負荷割当、`SupportSla` の選択、`SupportSlaCalculator` による営業時間の期限計算、`support.sla.pauseOnPending` の停止・再開、`escalateOverdueSupportCases` による期限超過の検知・エスカレーション・タスク作成を実装した。
 - **S4**：`createSupportCaseForCustomer` / `listSupportCasesForCustomer` / `getSupportCaseForCustomer` / `replySupportCaseFromCustomer` / `closeSupportCaseByCustomer` / `rateSupportCase` / `getSupportCaseFormOptions` / `uploadSupportAttachment` と `supportApiPermission` を実装した。顧客の所有確認、内部メモの非公開、`externalId` の冪等性、`api/support.rest.xml`（`publish="false"`）を追加した。
-- **テスト**：`.\gradlew.bat compileJava compileGroovy` 成功。`.\gradlew.bat "ofbiz --load-data readers=seed --load-data component=support"` で seed 76 行を投入。`.\gradlew.bat "ofbiz --test component=support"` は 34 テスト、`errors="0"` / `failures="0"`。
-- **画面**：`/support/control/main`、`FindSupportCase`、`EditSupportCase`、`createSupportCase` → `ViewSupportCase`、内部メモ・返信・スレッド表示の描画を確認した。キュー・SLA の値はケース詳細に表示される。
-- **未実装**：S5 以降（レポート・監査/保存）。顧客向け REST の公開は efinance の認証完成後。エスカレーションのメール通知とジョブスケジューラの登録は運用設定で追加する。
+- **S5**：`getSupportMetrics` を実装した。期間・キュー・担当・商品・種別・契約で絞り込み、受付・解決・クローズ・未解決・期限超過・平均一次応答時間・平均解決時間・SLA 遵守率・CSAT（平均と 1〜5 の分布）を返す。キュー・担当者・種別・商品の内訳（名称付き）、CSV 用の行データも返す。`SupportDashboard` 画面と `SupportMetricsCsv`（`text/csv`）を追加し、レポート権限 `SUPPORT_REPORT_VIEW` を `SUPPORT_MANAGER` / `SUPER` に付与した。
+- **テスト**：`.\gradlew.bat compileJava compileGroovy` 成功。`.\gradlew.bat "ofbiz --load-data readers=seed --load-data component=support"` で seed 79 行を投入。`.\gradlew.bat "ofbiz --test component=support"` は 36 テスト、`errors="0"` / `failures="0"`（`runtime/logs/test-results/supporttests.xml`）。
+- **画面**：`/support/control/main`（ケース一覧）、`FindSupportCase`、`EditSupportCase`、`createSupportCase` → `ViewSupportCase`、内部メモ・返信・スレッド表示、`SupportDashboard` の集計表と `SupportMetricsCsv` の CSV を確認した。キュー・SLA の値はケース詳細に表示される。
+- **未実装**：S6（監査・保存・運用・テストの仕上げ）。顧客向け REST の公開は efinance の認証完成後。エスカレーションのメール通知とジョブスケジューラの登録は運用設定で追加する。
 
 ---
 
@@ -154,6 +155,7 @@ plugins/support/
 | `SUPPORT_AGENT` | ケースの閲覧・返信・内部メモ・状態変更・タスク作成 |
 | `SUPPORT_MANAGER` | エージェントの権限＋再割当・キュー管理・レポート |
 | `SUPPORT_ADMIN` | すべて＋SLA・設定・権限の管理 |
+| `SUPPORT_REPORT_VIEW` | ダッシュボード・CSV の閲覧（`SUPPORT_MANAGER` / `SUPER`） |
 | `SUPPORT_API` / `SUPPORT_API_VIEW` / `SUPPORT_API_CREATE` / `SUPPORT_API_UPDATE` | 顧客 API 用。efinance のシステムユーザーだけに付与する（グループ `SUPPORT_API_CLIENT`） |
 
 - seed で `FULLADMIN` に `SUPPORT_ADMIN` を付与する。運用用のグループ（例：`SUPPORTAGENT` / `SUPPORTMANAGER`）は demo または運用設定で追加する。
@@ -475,7 +477,7 @@ SUPCS_CANCELLED → （終端）
   - `firstResponseAt` が空 かつ `firstResponseDueAt < now`
   - `resolvedAt` が空 かつ `resolutionDueAt < now`
 - 対象ごとに `escalationLevel` を 1 上げ、`lastEscalatedAt` を設定する。同じレベルで重複通知しない（`lastEscalatedAt` とレベルの組み合わせで判定）。
-- 通知：ケースにエスカレーションの内部メモ（`COMMENT_NOTE`）を作成し、担当者・マネージャ向けの `WorkEffort` タスクを作る。メール通知は S5 以降または運用設定で追加する。
+- 通知：ケースにエスカレーションの内部メモ（`COMMENT_NOTE`）を作成し、担当者・マネージャ向けの `WorkEffort` タスクを作る。メール通知は S6 以降または運用設定で追加する。
 - タスク：契約がある場合は `createFinanceContractTask`（`financeWorkTypeEnumId=FINWE_OTHER`、`triggerKey=supportCaseId:ESC:{level}`）。契約がない場合は core `WorkEffort` を作成し、`SupportCaseWorkEffort` でリンクする。
 - 最大レベルに達したら、`support.escalation.repeatMinutes` の間隔で「要対応」の内部メモとタスクを繰り返す。
 
@@ -513,9 +515,9 @@ SUPCS_CANCELLED → （終端）
 | `getSupportCaseFormOptions` | `customerPartyId` | 契約・申込・商品・種別の選択肢 |
 | `uploadSupportAttachment` | `customerPartyId`、`supportCaseId`、`communicationEventId`（任意）、`fileName`、`contentType`、`uploadedFile` | `contentId` |
 
-- 顧客の返信は `CommunicationEvent`（`WEB_SITE_COMMUNICATI`）として記録し、`SupportCaseCommEvent` に `SUPMSG_IN` でリンクする。担当者へのメール通知は S5 以降または運用設定で追加する。
+- 顧客の返信は `CommunicationEvent`（`WEB_SITE_COMMUNICATI`）として記録し、`SupportCaseCommEvent` に `SUPMSG_IN` でリンクする。担当者へのメール通知は S6 以降または運用設定で追加する。
 - 顧客は優先度・担当・キューを指定できない。support が既定値（通常）と SLA・ルーティングで設定する。
-- 顧客のクローズは、状態が `SUPCS_RESOLVED` なら `SUPCS_CLOSED`、それ以外（`SUPCS_NEW` / `SUPCS_OPEN` / `SUPCS_PENDING`）なら取り下げとして `SUPCS_CANCELLED` にし、`resolutionEnumId = SUPRES_WITHDRAWN` を設定する。担当者への通知は S5 以降または運用設定で追加する。
+- 顧客のクローズは、状態が `SUPCS_RESOLVED` なら `SUPCS_CLOSED`、それ以外（`SUPCS_NEW` / `SUPCS_OPEN` / `SUPCS_PENDING`）なら取り下げとして `SUPCS_CANCELLED` にし、`resolutionEnumId = SUPRES_WITHDRAWN` を設定する。担当者への通知は S6 以降または運用設定で追加する。
 - `externalId` は冪等キー。同じ `externalId` の作成・返信は既存の結果を返す。
 
 ### 6.3 REST の契約
@@ -566,15 +568,17 @@ SUPCS_CANCELLED → （終端）
 
 ### 7.2 実装
 
-- `getSupportMetrics` は `EntityQuery` の条件と集計（`EntityFunction`）で計算する。期間・キュー・担当・商品・種別で絞り込む。
-- 画面は `SupportDashboard` に表形式で表示する。グラフが必要になったら既存のテーマ／JasperReports を使う。
-- CSV 出力は一覧の項目をそのまま出す（権限に応じて個人情報をマスク）。
-- 件数が増えたら `SupportDailyStat`（日付 × キュー × 担当の集計）を追加し、ジョブで日次に作る。
+- `getSupportMetrics`（`SupportCaseServices.getSupportMetrics`）は、キュー・担当・商品・種別・契約の `EntityQuery` 条件でケースを取得し、期間内の受付・解決・クローズ、期間末時点の未解決・期限超過、応答／解決時間、SLA、CSAT を Java で集計する。現在のケース件数を前提にした実装で、大量データ時の SQL 集計（`EntityFunction`）への置き換えは S6 以降の課題とする。
+- 未解決は「`openedAt` が期間末以前で、`resolvedAt` / `closedAt` が期間末より後または未設定」のケースとする。期限超過は期間末（未来指定時は現在）時点で一次応答期限または解決期限を過ぎ、未応答・未解決のケースとする。一次応答の自動受付は `firstResponseAt` を更新しないため平均から除外される。
+- 内訳はキュー・担当者・種別・商品ごとに受付・未解決・期限超過を返す。担当者は `PartyNameView`、キューは `SupportQueue`、種別は `Enumeration`、商品は `Product` から表示名を解決する。該当なしは `-` と表示する。
+- 画面は `SupportDashboard`（`/support/control/SupportDashboard`）に表形式で表示する。期間・キュー・担当・商品・種別で絞り込める。`SUPPORT_REPORT_VIEW` または `SUPPORT_ADMIN` が必要。
+- CSV は `SupportMetricsCsv`（`/support/control/SupportMetricsCsv`）で、画面と同じ絞り込み条件を引き継ぎ、指標と内訳を `section,key,openedCount,unresolvedCount,overdueCount,value` の形式で出力する。顧客の連絡先・内部メモなどの機微情報は含めず、担当者名はレポート権限（`SUPPORT_REPORT_VIEW` / `SUPPORT_ADMIN`）でのみ表示する。
+- 件数が増えたら `SupportDailyStat`（日付 × キュー × 担当の集計）を追加し、ジョブで日次に作る（未実装）。
 
 ### 7.3 テスト
 
-- 指標の計算（境界日時、未解決、期限超過、CSAT の欠損）。
-- 権限（マネージャのみ）とマスク。
+- `SupportReportTests` で受付・解決・クローズ・未解決・期限超過、平均応答、CSAT 平均・分布、内訳、CSV 行の生成を確認する。
+- 権限（`SUPPORT_REPORT_VIEW` / `SUPPORT_ADMIN`、マネージャのみ）は `supportReportPermission` で検査する。CSV に個人情報を含めない。
 
 ---
 
@@ -584,7 +588,7 @@ SUPCS_CANCELLED → （終端）
 
 | request-map | 内容 |
 |-------------|------|
-| `main` | ダッシュボード |
+| `main` | ケース一覧（ログイン後の既定画面） |
 | `FindSupportCase` | 一覧 |
 | `ViewSupportCase` | 詳細 |
 | `EditSupportCase` | 編集 |
@@ -598,7 +602,8 @@ SUPCS_CANCELLED → （終端）
 | `replySupportCase` | 返信 |
 | `addSupportCaseInternalNote` | 内部メモ |
 | `createSupportCaseTask` | タスク作成 |
-| `SupportDashboard` | 集計 |
+| `SupportDashboard` | 集計（ダッシュボード） |
+| `SupportMetricsCsv` | 集計の CSV 出力 |
 | `FindSupportQueue` / `EditSupportQueue` | キュー管理 |
 | `FindSupportSla` / `EditSupportSla` | SLA 管理 |
 

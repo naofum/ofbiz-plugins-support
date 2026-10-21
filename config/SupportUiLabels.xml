@@ -262,4 +262,120 @@ under the License.
         <value xml:lang="en">The satisfaction score must be between 1 and 5.</value>
         <value xml:lang="ja">満足度は 1〜5 の範囲で指定してください。</value>
     </property>
+    <property key="PageTitleSupportDashboard">
+        <value xml:lang="en">Support Dashboard</value>
+        <value xml:lang="ja">サポートダッシュボード</value>
+    </property>
+    <property key="SupportDashboard">
+        <value xml:lang="en">Support Dashboard</value>
+        <value xml:lang="ja">サポートダッシュボード</value>
+    </property>
+    <property key="SupportMetrics">
+        <value xml:lang="en">Metrics</value>
+        <value xml:lang="ja">集計</value>
+    </property>
+    <property key="SupportFromDate">
+        <value xml:lang="en">From</value>
+        <value xml:lang="ja">開始日</value>
+    </property>
+    <property key="SupportThruDate">
+        <value xml:lang="en">Through</value>
+        <value xml:lang="ja">終了日</value>
+    </property>
+    <property key="SupportOpenedCount">
+        <value xml:lang="en">Opened</value>
+        <value xml:lang="ja">受付件数</value>
+    </property>
+    <property key="SupportResolvedCount">
+        <value xml:lang="en">Resolved</value>
+        <value xml:lang="ja">解決件数</value>
+    </property>
+    <property key="SupportClosedCount">
+        <value xml:lang="en">Closed</value>
+        <value xml:lang="ja">クローズ件数</value>
+    </property>
+    <property key="SupportUnresolvedCount">
+        <value xml:lang="en">Unresolved</value>
+        <value xml:lang="ja">未解決件数</value>
+    </property>
+    <property key="SupportOverdueCount">
+        <value xml:lang="en">Overdue</value>
+        <value xml:lang="ja">期限超過件数</value>
+    </property>
+    <property key="SupportAvgFirstResponse">
+        <value xml:lang="en">Avg. First Response (min)</value>
+        <value xml:lang="ja">平均一次応答時間（分）</value>
+    </property>
+    <property key="SupportAvgResolution">
+        <value xml:lang="en">Avg. Resolution (min)</value>
+        <value xml:lang="ja">平均解決時間（分）</value>
+    </property>
+    <property key="SupportSlaCompliance">
+        <value xml:lang="en">SLA Compliance (%)</value>
+        <value xml:lang="ja">SLA 遵守率（％）</value>
+    </property>
+    <property key="SupportCsatAverage">
+        <value xml:lang="en">CSAT Average</value>
+        <value xml:lang="ja">満足度平均</value>
+    </property>
+    <property key="SupportByQueue">
+        <value xml:lang="en">By Queue</value>
+        <value xml:lang="ja">キュー別</value>
+    </property>
+    <property key="SupportByAssignee">
+        <value xml:lang="en">By Assignee</value>
+        <value xml:lang="ja">担当者別</value>
+    </property>
+    <property key="SupportByCaseType">
+        <value xml:lang="en">By Case Type</value>
+        <value xml:lang="ja">種別別</value>
+    </property>
+    <property key="SupportByProduct">
+        <value xml:lang="en">By Product</value>
+        <value xml:lang="ja">商品別</value>
+    </property>
+    <property key="SupportMetricsEmpty">
+        <value xml:lang="en">No cases match the selected period.</value>
+        <value xml:lang="ja">指定した期間に該当するケースはありません。</value>
+    </property>
+    <property key="SupportCsatDistribution">
+        <value xml:lang="en">CSAT Distribution</value>
+        <value xml:lang="ja">満足度分布</value>
+    </property>
+    <property key="SupportCsatScore1">
+        <value xml:lang="en">CSAT 1</value>
+        <value xml:lang="ja">満足度 1</value>
+    </property>
+    <property key="SupportCsatScore2">
+        <value xml:lang="en">CSAT 2</value>
+        <value xml:lang="ja">満足度 2</value>
+    </property>
+    <property key="SupportCsatScore3">
+        <value xml:lang="en">CSAT 3</value>
+        <value xml:lang="ja">満足度 3</value>
+    </property>
+    <property key="SupportCsatScore4">
+        <value xml:lang="en">CSAT 4</value>
+        <value xml:lang="ja">満足度 4</value>
+    </property>
+    <property key="SupportCsatScore5">
+        <value xml:lang="en">CSAT 5</value>
+        <value xml:lang="ja">満足度 5</value>
+    </property>
+    <property key="SupportExportCsv">
+        <value xml:lang="en">Export CSV</value>
+        <value xml:lang="ja">CSV 出力</value>
+    </property>
+    <property key="SupportCsvSection">
+        <value xml:lang="en">Section</value>
+        <value xml:lang="ja">区分</value>
+    </property>
+    <property key="SupportCsvKey">
+        <value xml:lang="en">Key</value>
+        <value xml:lang="ja">キー</value>
+    </property>
+    <property key="SupportCsvValue">
+        <value xml:lang="en">Value</value>
+        <value xml:lang="ja">値</value>
+    </property>
 </resource>

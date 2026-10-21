@@ -1715,6 +1715,328 @@ public final class SupportCaseServices {
         }
     }
 
+    public static Map<String, Object> getSupportMetrics(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        Timestamp now = UtilDateTime.nowTimestamp();
+        Timestamp fromDate = context.get("fromDate") instanceof Timestamp
+                ? (Timestamp) context.get("fromDate") : new Timestamp(now.getTime() - 30L * 24 * 60 * 60 * 1000);
+        Timestamp thruDate = context.get("thruDate") instanceof Timestamp
+                ? (Timestamp) context.get("thruDate") : now;
+        Timestamp asOf = thruDate.after(now) ? now : thruDate;
+        try {
+            List<EntityCondition> conditions = new ArrayList<>();
+            addEquals(conditions, "queueId", getString(context, "queueId"));
+            addEquals(conditions, "assigneePartyId", getString(context, "assigneePartyId"));
+            addEquals(conditions, "productId", getString(context, "productId"));
+            addEquals(conditions, "caseTypeEnumId", getString(context, "caseTypeEnumId"));
+            addEquals(conditions, "financeContractId", getString(context, "financeContractId"));
+            EntityQuery query = EntityQuery.use(delegator).from("SupportCase");
+            if (!conditions.isEmpty()) {
+                query = query.where(EntityCondition.makeCondition(conditions, EntityOperator.AND));
+            }
+            List<GenericValue> cases = query.queryList();
+
+            int openedCount = 0;
+            int resolvedCount = 0;
+            int closedCount = 0;
+            int unresolvedCount = 0;
+            int overdueCount = 0;
+            long firstResponseTotalMinutes = 0;
+            int firstResponseCount = 0;
+            long resolutionTotalMinutes = 0;
+            int resolutionCount = 0;
+            int firstResponseSlaMet = 0;
+            int firstResponseSlaTotal = 0;
+            int resolutionSlaMet = 0;
+            int resolutionSlaTotal = 0;
+            long csatTotal = 0;
+            int csatCount = 0;
+            int[] csatScores = new int[6];
+
+            Map<String, Map<String, Object>> byQueue = new LinkedHashMap<>();
+            Map<String, Map<String, Object>> byAssignee = new LinkedHashMap<>();
+            Map<String, Map<String, Object>> byCaseType = new LinkedHashMap<>();
+            Map<String, Map<String, Object>> byProduct = new LinkedHashMap<>();
+
+            for (GenericValue supportCase : cases) {
+                Timestamp openedAt = supportCase.getTimestamp("openedAt");
+                Timestamp resolvedAt = supportCase.getTimestamp("resolvedAt");
+                Timestamp closedAt = supportCase.getTimestamp("closedAt");
+                boolean opened = inPeriod(openedAt, fromDate, thruDate);
+                boolean resolved = inPeriod(resolvedAt, fromDate, thruDate);
+                boolean closed = inPeriod(closedAt, fromDate, thruDate);
+                boolean unresolved = isUnresolvedAt(supportCase, thruDate);
+                boolean overdue = unresolved && isOverdueAt(supportCase, asOf);
+
+                if (opened) {
+                    openedCount++;
+                }
+                if (resolved) {
+                    resolvedCount++;
+                }
+                if (closed) {
+                    closedCount++;
+                }
+                if (unresolved) {
+                    unresolvedCount++;
+                }
+                if (overdue) {
+                    overdueCount++;
+                }
+                if (opened && supportCase.get("firstResponseAt") != null) {
+                    firstResponseTotalMinutes += (supportCase.getTimestamp("firstResponseAt").getTime()
+                            - openedAt.getTime()) / 60_000L;
+                    firstResponseCount++;
+                }
+                if (resolved && resolvedAt != null && openedAt != null) {
+                    resolutionTotalMinutes += (resolvedAt.getTime() - openedAt.getTime()) / 60_000L;
+                    resolutionCount++;
+                }
+                Timestamp firstResponseDueAt = supportCase.getTimestamp("firstResponseDueAt");
+                if (opened && firstResponseDueAt != null) {
+                    if (supportCase.get("firstResponseAt") != null) {
+                        firstResponseSlaTotal++;
+                        if (!supportCase.getTimestamp("firstResponseAt").after(firstResponseDueAt)) {
+                            firstResponseSlaMet++;
+                        }
+                    } else if (!firstResponseDueAt.after(asOf)) {
+                        firstResponseSlaTotal++;
+                    }
+                }
+                Timestamp resolutionDueAt = supportCase.getTimestamp("resolutionDueAt");
+                if (resolved && resolutionDueAt != null) {
+                    resolutionSlaTotal++;
+                    if (!resolvedAt.after(resolutionDueAt)) {
+                        resolutionSlaMet++;
+                    }
+                }
+                BigDecimal score = decimal(supportCase, "satisfactionScore");
+                if (score != null && (resolved || closed)) {
+                    csatTotal += score.longValue();
+                    csatCount++;
+                    int rating = score.intValue();
+                    if (rating >= 1 && rating <= 5) {
+                        csatScores[rating]++;
+                    }
+                }
+
+                if (opened || resolved || closed || unresolved || overdue) {
+                    incrementGroup(byQueue, supportCase.getString("queueId"), "queueId", opened, unresolved, overdue);
+                    incrementGroup(byAssignee, supportCase.getString("assigneePartyId"), "assigneePartyId",
+                            opened, unresolved, overdue);
+                    incrementGroup(byCaseType, supportCase.getString("caseTypeEnumId"), "caseTypeEnumId",
+                            opened, unresolved, overdue);
+                    incrementGroup(byProduct, supportCase.getString("productId"), "productId",
+                            opened, unresolved, overdue);
+                }
+            }
+
+            enrichGroupNames(delegator, byQueue, "queue", "queueId");
+            enrichGroupNames(delegator, byAssignee, "assignee", "assigneePartyId");
+            enrichGroupNames(delegator, byCaseType, "caseType", "caseTypeEnumId");
+            enrichGroupNames(delegator, byProduct, "product", "productId");
+
+            int slaMet = firstResponseSlaMet + resolutionSlaMet;
+            int slaTotal = firstResponseSlaTotal + resolutionSlaTotal;
+            List<Map<String, Object>> csvRows = new ArrayList<>();
+            addCsvSummary(csvRows, "fromDate", fromDate.toString());
+            addCsvSummary(csvRows, "thruDate", thruDate.toString());
+            addCsvSummary(csvRows, "openedCount", openedCount);
+            addCsvSummary(csvRows, "resolvedCount", resolvedCount);
+            addCsvSummary(csvRows, "closedCount", closedCount);
+            addCsvSummary(csvRows, "unresolvedCount", unresolvedCount);
+            addCsvSummary(csvRows, "overdueCount", overdueCount);
+            addCsvSummary(csvRows, "avgFirstResponseMinutes", firstResponseCount == 0 ? 0.0
+                    : round1((double) firstResponseTotalMinutes / firstResponseCount));
+            addCsvSummary(csvRows, "avgResolutionMinutes", resolutionCount == 0 ? 0.0
+                    : round1((double) resolutionTotalMinutes / resolutionCount));
+            addCsvSummary(csvRows, "slaComplianceRate", slaTotal == 0 ? 0.0 : round1(100.0 * slaMet / slaTotal));
+            addCsvSummary(csvRows, "csatAverage", csatCount == 0 ? 0.0 : round1((double) csatTotal / csatCount));
+            addCsvSummary(csvRows, "csatCount", csatCount);
+            for (int rating = 1; rating <= 5; rating++) {
+                addCsvSummary(csvRows, "csatScore" + rating, csatScores[rating]);
+            }
+            for (Map<String, Object> group : byQueue.values()) {
+                addCsvGroup(csvRows, "QUEUE", group);
+            }
+            for (Map<String, Object> group : byAssignee.values()) {
+                addCsvGroup(csvRows, "ASSIGNEE", group);
+            }
+            for (Map<String, Object> group : byCaseType.values()) {
+                addCsvGroup(csvRows, "CASE_TYPE", group);
+            }
+            for (Map<String, Object> group : byProduct.values()) {
+                addCsvGroup(csvRows, "PRODUCT", group);
+            }
+
+            Map<String, Object> metrics = new HashMap<>();
+            metrics.put("fromDate", fromDate);
+            metrics.put("thruDate", thruDate);
+            metrics.put("openedCount", openedCount);
+            metrics.put("resolvedCount", resolvedCount);
+            metrics.put("closedCount", closedCount);
+            metrics.put("unresolvedCount", unresolvedCount);
+            metrics.put("overdueCount", overdueCount);
+            metrics.put("avgFirstResponseMinutes", firstResponseCount == 0 ? 0.0
+                    : round1((double) firstResponseTotalMinutes / firstResponseCount));
+            metrics.put("avgResolutionMinutes", resolutionCount == 0 ? 0.0
+                    : round1((double) resolutionTotalMinutes / resolutionCount));
+            metrics.put("firstResponseSlaMet", firstResponseSlaMet);
+            metrics.put("firstResponseSlaTotal", firstResponseSlaTotal);
+            metrics.put("resolutionSlaMet", resolutionSlaMet);
+            metrics.put("resolutionSlaTotal", resolutionSlaTotal);
+            metrics.put("slaComplianceRate", slaTotal == 0 ? 0.0 : round1(100.0 * slaMet / slaTotal));
+            metrics.put("csatAverage", csatCount == 0 ? 0.0 : round1((double) csatTotal / csatCount));
+            metrics.put("csatCount", csatCount);
+            metrics.put("csatScore1", csatScores[1]);
+            metrics.put("csatScore2", csatScores[2]);
+            metrics.put("csatScore3", csatScores[3]);
+            metrics.put("csatScore4", csatScores[4]);
+            metrics.put("csatScore5", csatScores[5]);
+            metrics.put("byQueue", new ArrayList<>(byQueue.values()));
+            metrics.put("byAssignee", new ArrayList<>(byAssignee.values()));
+            metrics.put("byCaseType", new ArrayList<>(byCaseType.values()));
+            metrics.put("byProduct", new ArrayList<>(byProduct.values()));
+            metrics.put("csvRows", csvRows);
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("metrics", metrics);
+            return result;
+        } catch (GenericEntityException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    private static void addCsvSummary(List<Map<String, Object>> rows, String key, Object value) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("section", "SUMMARY");
+        row.put("key", key);
+        row.put("value", value);
+        rows.add(row);
+    }
+
+    private static void addCsvGroup(List<Map<String, Object>> rows, String section, Map<String, Object> group) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("section", section);
+        row.put("key", group.get("name"));
+        row.put("openedCount", group.get("openedCount"));
+        row.put("unresolvedCount", group.get("unresolvedCount"));
+        row.put("overdueCount", group.get("overdueCount"));
+        rows.add(row);
+    }
+
+    private static void enrichGroupNames(Delegator delegator, Map<String, Map<String, Object>> groups,
+            String kind, String idField) throws GenericEntityException {
+        for (Map.Entry<String, Map<String, Object>> entry : groups.entrySet()) {
+            String key = entry.getKey();
+            String name = "_NA_".equals(key) ? "-" : key;
+            if (!"_NA_".equals(key)) {
+                if ("queue".equals(kind)) {
+                    GenericValue queue = EntityQuery.use(delegator).from("SupportQueue")
+                            .where("queueId", key).queryOne();
+                    if (queue != null && UtilValidate.isNotEmpty(queue.getString("queueName"))) {
+                        name = queue.getString("queueName");
+                    }
+                } else if ("assignee".equals(kind)) {
+                    GenericValue person = EntityQuery.use(delegator).from("PartyNameView")
+                            .where("partyId", key).queryOne();
+                    if (person != null) {
+                        String firstName = person.getString("firstName");
+                        String lastName = person.getString("lastName");
+                        String groupName = person.getString("groupName");
+                        if (UtilValidate.isNotEmpty(firstName) || UtilValidate.isNotEmpty(lastName)) {
+                            name = (nullToEmpty(firstName) + " " + nullToEmpty(lastName)).trim();
+                        } else if (UtilValidate.isNotEmpty(groupName)) {
+                            name = groupName;
+                        }
+                    }
+                } else if ("caseType".equals(kind)) {
+                    GenericValue enumeration = EntityQuery.use(delegator).from("Enumeration")
+                            .where("enumId", key).queryOne();
+                    if (enumeration != null && UtilValidate.isNotEmpty(enumeration.getString("description"))) {
+                        name = enumeration.getString("description");
+                    }
+                } else if ("product".equals(kind)) {
+                    GenericValue product = EntityQuery.use(delegator).from("Product")
+                            .where("productId", key).queryOne();
+                    if (product != null && UtilValidate.isNotEmpty(product.getString("productName"))) {
+                        name = product.getString("productName");
+                    }
+                }
+            }
+            entry.getValue().put(idField, key);
+            entry.getValue().put("name", name);
+        }
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static boolean inPeriod(Timestamp value, Timestamp fromDate, Timestamp thruDate) {
+        return value != null && !value.before(fromDate) && !value.after(thruDate);
+    }
+
+    private static boolean isUnresolvedAt(GenericValue supportCase, Timestamp asOf) {
+        Timestamp openedAt = supportCase.getTimestamp("openedAt");
+        if (openedAt == null || openedAt.after(asOf)) {
+            return false;
+        }
+        Timestamp resolvedAt = supportCase.getTimestamp("resolvedAt");
+        if (resolvedAt != null && !resolvedAt.after(asOf)) {
+            return false;
+        }
+        Timestamp closedAt = supportCase.getTimestamp("closedAt");
+        if (closedAt != null && !closedAt.after(asOf)) {
+            return false;
+        }
+        String statusId = supportCase.getString("statusId");
+        if (STATUS_RESOLVED.equals(statusId) && resolvedAt == null) {
+            return false;
+        }
+        if (STATUS_CLOSED.equals(statusId) && closedAt == null && resolvedAt == null) {
+            return false;
+        }
+        return !(STATUS_CANCELLED.equals(statusId) && resolvedAt == null && closedAt == null);
+    }
+
+    private static boolean isOverdueAt(GenericValue supportCase, Timestamp asOf) {
+        Timestamp firstResponseAt = supportCase.getTimestamp("firstResponseAt");
+        Timestamp firstResponseDueAt = supportCase.getTimestamp("firstResponseDueAt");
+        Timestamp resolvedAt = supportCase.getTimestamp("resolvedAt");
+        Timestamp resolutionDueAt = supportCase.getTimestamp("resolutionDueAt");
+        boolean firstResponseOverdue = (firstResponseAt == null || firstResponseAt.after(asOf))
+                && firstResponseDueAt != null && firstResponseDueAt.before(asOf);
+        boolean resolutionOverdue = (resolvedAt == null || resolvedAt.after(asOf))
+                && resolutionDueAt != null && resolutionDueAt.before(asOf);
+        return firstResponseOverdue || resolutionOverdue;
+    }
+
+    private static void incrementGroup(Map<String, Map<String, Object>> groups, String key, String idField,
+            boolean opened, boolean unresolved, boolean overdue) {
+        String groupKey = UtilValidate.isEmpty(key) ? "_NA_" : key;
+        Map<String, Object> group = groups.computeIfAbsent(groupKey, unused -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put(idField, groupKey);
+            row.put("openedCount", 0);
+            row.put("unresolvedCount", 0);
+            row.put("overdueCount", 0);
+            return row;
+        });
+        if (opened) {
+            group.put("openedCount", ((Integer) group.get("openedCount")) + 1);
+        }
+        if (unresolved) {
+            group.put("unresolvedCount", ((Integer) group.get("unresolvedCount")) + 1);
+        }
+        if (overdue) {
+            group.put("overdueCount", ((Integer) group.get("overdueCount")) + 1);
+        }
+    }
+
+    private static double round1(double value) {
+        return Math.round(value * 10.0) / 10.0;
+    }
+
     private static void addEquals(List<EntityCondition> conditions, String field, String value) {
         if (UtilValidate.isNotEmpty(value)) {
             conditions.add(EntityCondition.makeCondition(field, value));

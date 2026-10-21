@@ -21,6 +21,94 @@ under the License.
 <screens xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="http://ofbiz.apache.org/Widget-Screen" xsi:schemaLocation="http://ofbiz.apache.org/Widget-Screen http://ofbiz.apache.org/dtds/widget-screen.xsd">
 
+    <screen name="SupportDashboard">
+        <section>
+            <actions>
+                <set field="titleProperty" value="PageTitleSupportDashboard"/>
+                <set field="headerItem" value="SupportDashboard"/>
+                <service service-name="getSupportMetrics" result-map="metricsResult">
+                    <field-map field-name="fromDate" from-field="parameters.fromDate"/>
+                    <field-map field-name="thruDate" from-field="parameters.thruDate"/>
+                    <field-map field-name="queueId" from-field="parameters.queueId"/>
+                    <field-map field-name="assigneePartyId" from-field="parameters.assigneePartyId"/>
+                    <field-map field-name="productId" from-field="parameters.productId"/>
+                    <field-map field-name="caseTypeEnumId" from-field="parameters.caseTypeEnumId"/>
+                </service>
+                <set field="metrics" from-field="metricsResult.metrics"/>
+                <set field="byQueue" from-field="metrics.byQueue"/>
+                <set field="byAssignee" from-field="metrics.byAssignee"/>
+                <set field="byCaseType" from-field="metrics.byCaseType"/>
+                <set field="byProduct" from-field="metrics.byProduct"/>
+            </actions>
+            <widgets>
+                <decorator-screen name="main-decorator" location="${parameters.mainDecoratorLocation}">
+                    <decorator-section name="body">
+                        <screenlet title="${uiLabelMap.SupportDashboard}">
+                            <include-form name="FindSupportMetrics" location="component://support/widget/SupportForms.xml"/>
+                            <link text="${uiLabelMap.SupportExportCsv}" target="SupportMetricsCsv" style="button">
+                                <parameter param-name="fromDate"/>
+                                <parameter param-name="thruDate"/>
+                                <parameter param-name="queueId"/>
+                                <parameter param-name="assigneePartyId"/>
+                                <parameter param-name="productId"/>
+                                <parameter param-name="caseTypeEnumId"/>
+                            </link>
+                        </screenlet>
+                        <section>
+                            <condition>
+                                <if-empty field="metrics"/>
+                            </condition>
+                            <widgets>
+                                <label style="h3" text="${uiLabelMap.SupportMetricsEmpty}"/>
+                            </widgets>
+                            <fail-widgets>
+                                <screenlet title="${uiLabelMap.SupportMetrics}">
+                                    <include-form name="SupportMetrics" location="component://support/widget/SupportForms.xml"/>
+                                </screenlet>
+                                <container style="lefthalf">
+                                    <screenlet title="${uiLabelMap.SupportByQueue}">
+                                        <include-form name="ListMetricsByQueue" location="component://support/widget/SupportForms.xml"/>
+                                    </screenlet>
+                                    <screenlet title="${uiLabelMap.SupportByCaseType}">
+                                        <include-form name="ListMetricsByCaseType" location="component://support/widget/SupportForms.xml"/>
+                                    </screenlet>
+                                </container>
+                                <container style="righthalf">
+                                    <screenlet title="${uiLabelMap.SupportByAssignee}">
+                                        <include-form name="ListMetricsByAssignee" location="component://support/widget/SupportForms.xml"/>
+                                    </screenlet>
+                                    <screenlet title="${uiLabelMap.SupportByProduct}">
+                                        <include-form name="ListMetricsByProduct" location="component://support/widget/SupportForms.xml"/>
+                                    </screenlet>
+                                </container>
+                            </fail-widgets>
+                        </section>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="SupportMetricsCsv">
+        <section>
+            <actions>
+                <property-map resource="SupportUiLabels" map-name="uiLabelMap" global="true"/>
+                <service service-name="getSupportMetrics" result-map="metricsResult">
+                    <field-map field-name="fromDate" from-field="parameters.fromDate"/>
+                    <field-map field-name="thruDate" from-field="parameters.thruDate"/>
+                    <field-map field-name="queueId" from-field="parameters.queueId"/>
+                    <field-map field-name="assigneePartyId" from-field="parameters.assigneePartyId"/>
+                    <field-map field-name="productId" from-field="parameters.productId"/>
+                    <field-map field-name="caseTypeEnumId" from-field="parameters.caseTypeEnumId"/>
+                </service>
+                <set field="csvRows" from-field="metricsResult.metrics.csvRows"/>
+            </actions>
+            <widgets>
+                <include-form name="ExportSupportMetricsCsv" location="component://support/widget/SupportForms.xml"/>
+            </widgets>
+        </section>
+    </screen>
+
     <screen name="FindSupportCase">
         <section>
             <actions>

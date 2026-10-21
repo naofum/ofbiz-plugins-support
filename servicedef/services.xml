@@ -44,6 +44,13 @@ under the License.
         <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
     </service>
 
+    <service name="supportReportPermission" engine="simple" default-entity-name="SupportCase"
+            location="component://support/minilang/SupportPermissionServices.xml" invoke="supportReportPermission" auth="true">
+        <description>Support report permission checking logic</description>
+        <attribute name="hasPermission" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
+    </service>
+
     <!-- ============================================================= -->
     <!-- Case lifecycle                                                -->
     <!-- ============================================================= -->
@@ -324,6 +331,20 @@ under the License.
         <attribute name="contentType" type="String" mode="IN" optional="true"/>
         <attribute name="uploadedFile" type="java.nio.ByteBuffer" mode="IN" optional="false"/>
         <attribute name="contentId" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="getSupportMetrics" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="getSupportMetrics" auth="true">
+        <description>Get support metrics for the dashboard.</description>
+        <permission-service service-name="supportReportPermission"/>
+        <attribute name="fromDate" type="Timestamp" mode="IN" optional="true"/>
+        <attribute name="thruDate" type="Timestamp" mode="IN" optional="true"/>
+        <attribute name="queueId" type="String" mode="IN" optional="true"/>
+        <attribute name="assigneePartyId" type="String" mode="IN" optional="true"/>
+        <attribute name="productId" type="String" mode="IN" optional="true"/>
+        <attribute name="caseTypeEnumId" type="String" mode="IN" optional="true"/>
+        <attribute name="financeContractId" type="String" mode="IN" optional="true"/>
+        <attribute name="metrics" type="Map" mode="OUT" optional="true"/>
     </service>
 
 </services>
