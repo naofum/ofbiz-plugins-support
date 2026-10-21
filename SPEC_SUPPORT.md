@@ -85,7 +85,7 @@ core の `CustRequest`（`RF_SUPPORT`）は使わない。ordermgr の顧客依�
 
 | 文書 | 内容 |
 |------|------|
-| `plugins/finance/SPEC_EFINANCE.md` | efinance の W6（マイページ・メッセージ・手続き）。support の顧客 API はここから呼ぶ |
+| `plugins/efinance/SPEC_EFINANCE.md` | efinance の W0〜W6（認証・申込・本人確認・契約・マイページ）。support の顧客 API はここから呼ぶ設計。ただし 2026-10-21 時点で efinance からの support サービス呼出しは未実装 |
 | `plugins/finance/SPEC_COMMON.md` | finance 共通層（契約・タスク・営業日カレンダー） |
 | `plugins/finance/REQUIREMENTS.md` / `REQUIREMENTS_LEASE.md` | ローン・リースの要件 |
 | `plugins/finance/AGENTS.md` | finance の層・依存の規則 |
@@ -498,7 +498,7 @@ SUPCS_CANCELLED → （終端）
 ### 6.1 方針
 
 - 顧客向けの画面は support に置かない。efinance / 別フロントエンドが REST API を呼ぶ。
-- support は**サービス API**（IN/OUT）を正とし、`api/support.rest.xml` は契約の定義用に置く。既定は `publish="false"`。efinance の W0（会員・認証）ができた時点で、efinance の `api/efinance.rest.xml` から `/efinance/support/...` として公開するか、support の API を有効化する。
+- support は**サービス API**（IN/OUT）を正とし、`api/support.rest.xml` は契約の定義用に置く。既定は `publish="false"`。efinance の W0〜W6 の API は実装済みだが、**support 連携ブリッジは未実装**（2026-10-21）。実装時は efinance の `api/efinance.rest.xml` から `/ef/support/...` として公開し、support の `publish="false"` は維持する。
 - 顧客の `UserLogin` に finance / support のスタッフ権限を付けない。efinance のシステムユーザー（`SUPPORT_API_VIEW` / `SUPPORT_API_CREATE` / `SUPPORT_API_UPDATE`）が support のサービスを呼び、顧客の所有確認は efinance の `EfAccessGuard` が行う。
 - support 側でも `customerPartyId` とケースの `customerPartyId` の一致を検証する（IDOR 防止）。法人の権限（`EfCorporateUser`）は efinance が判定し、support は受け取った `customerPartyId` を信頼しすぎない。
 - 手続き依頼（`EfServiceRequest`）との連携は efinance 側で `supportCaseId` を持たせる。support は `SupportCase.externalId` に efinance のリクエスト ID を保持でき、相互参照できる。
