@@ -246,4 +246,20 @@ under the License.
         <value xml:lang="en">Escalated support case. Review the case, contact the customer and update the status.</value>
         <value xml:lang="ja">エスカレーションされたサポートケースです。内容を確認し、顧客へ連絡して状態を更新してください。</value>
     </property>
+    <property key="SupportApiCustomerRequired">
+        <value xml:lang="en">The customer is required.</value>
+        <value xml:lang="ja">顧客は必須です。</value>
+    </property>
+    <property key="SupportApiCustomerAndSubjectRequired">
+        <value xml:lang="en">The customer and subject are required.</value>
+        <value xml:lang="ja">顧客と件名は必須です。</value>
+    </property>
+    <property key="SupportApiMessageRequired">
+        <value xml:lang="en">The message is required.</value>
+        <value xml:lang="ja">メッセージは必須です。</value>
+    </property>
+    <property key="SupportApiInvalidScore">
+        <value xml:lang="en">The satisfaction score must be between 1 and 5.</value>
+        <value xml:lang="ja">満足度は 1〜5 の範囲で指定してください。</value>
+    </property>
 </resource>

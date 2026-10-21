@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<!-- Customer support API contract. It is not published until efinance's JWT
+     authentication and EfAccessGuard are in place. Enable by setting
+     publish="true" or expose the same services from efinance. -->
+<api name="support" displayName="Support" description="Customer support cases"
+     publish="false">
+    <resource name="cases" path="/support/cases" auth="true">
+        <operation verb="get" produces="application/json">
+            <service name="listSupportCasesForCustomer"/>
+        </operation>
+        <operation verb="post" consumes="application/json" produces="application/json">
+            <service name="createSupportCaseForCustomer"/>
+        </operation>
+    </resource>
+    <resource name="case" path="/support/cases/{supportCaseId}" auth="true">
+        <operation verb="get" produces="application/json">
+            <service name="getSupportCaseForCustomer"/>
+        </operation>
+    </resource>
+    <resource name="messages" path="/support/cases/{supportCaseId}/messages" auth="true">
+        <operation verb="post" consumes="application/json" produces="application/json">
+            <service name="replySupportCaseFromCustomer"/>
+        </operation>
+    </resource>
+    <resource name="close" path="/support/cases/{supportCaseId}/close" auth="true">
+        <operation verb="post" produces="application/json">
+            <service name="closeSupportCaseByCustomer"/>
+        </operation>
+    </resource>
+    <resource name="rating" path="/support/cases/{supportCaseId}/rating" auth="true">
+        <operation verb="post" consumes="application/json" produces="application/json">
+            <service name="rateSupportCase"/>
+        </operation>
+    </resource>
+    <resource name="formOptions" path="/support/form-options" auth="true">
+        <operation verb="get" produces="application/json">
+            <service name="getSupportCaseFormOptions"/>
+        </operation>
+    </resource>
+    <resource name="attachments" path="/support/attachments" auth="true">
+        <operation verb="post" produces="application/json">
+            <service name="uploadSupportAttachment"/>
+        </operation>
+    </resource>
+</api>

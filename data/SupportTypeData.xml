@@ -88,9 +88,13 @@ under the License.
     <SecurityPermission permissionId="SUPPORT_DELETE" description="Delete support cases"/>
     <SecurityPermission permissionId="SUPPORT_ADMIN" description="Administer support cases, queues and SLAs"/>
     <SecurityPermission permissionId="SUPPORT_API" description="Use the customer support API"/>
+    <SecurityPermission permissionId="SUPPORT_API_VIEW" description="View own support cases through the customer API"/>
+    <SecurityPermission permissionId="SUPPORT_API_CREATE" description="Create support cases through the customer API"/>
+    <SecurityPermission permissionId="SUPPORT_API_UPDATE" description="Reply, close and rate own support cases through the customer API"/>
 
     <SecurityGroup groupId="SUPPORT_AGENT" groupName="Support Agent" description="Support agent group"/>
     <SecurityGroup groupId="SUPPORT_MANAGER" groupName="Support Manager" description="Support manager group"/>
+    <SecurityGroup groupId="SUPPORT_API_CLIENT" groupName="Support API Client" description="Customer API client group"/>
 
     <SecurityGroupPermission groupId="SUPPORT_AGENT" permissionId="SUPPORT" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_AGENT" permissionId="SUPPORT_VIEW" fromDate="2026-10-20 00:00:00.0"/>
@@ -102,6 +106,11 @@ under the License.
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_CREATE" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_UPDATE" fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPPORT_MANAGER" permissionId="SUPPORT_DELETE" fromDate="2026-10-20 00:00:00.0"/>
+
+    <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API_VIEW" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API_CREATE" fromDate="2026-10-20 00:00:00.0"/>
+    <SecurityGroupPermission groupId="SUPPORT_API_CLIENT" permissionId="SUPPORT_API_UPDATE" fromDate="2026-10-20 00:00:00.0"/>
 
     <!-- The built-in SUPER group (system and super users) can administer support. -->
     <SecurityGroupPermission groupId="SUPER" permissionId="SUPPORT" fromDate="2026-10-20 00:00:00.0"/>

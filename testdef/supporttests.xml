@@ -30,4 +30,8 @@ under the License.
         <junit-test-suite class-name="org.apache.ofbiz.support.test.SupportCaseTests"/>
     </test-case>
 
+    <test-case case-name="support-api-tests">
+        <junit-test-suite class-name="org.apache.ofbiz.support.test.SupportApiTests"/>
+    </test-case>
+
 </test-suite>

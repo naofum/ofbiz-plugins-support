@@ -43,6 +43,9 @@ under the License.
     <UserLogin userLoginId="support_test_agent" partyId="TEST_SUPPORT_AGENT" enabled="Y"/>
     <UserLoginSecurityGroup userLoginId="support_test_agent" groupId="SUPPORT_AGENT"
                             fromDate="2026-10-20 00:00:00.0"/>
+    <UserLogin userLoginId="support_test_api" partyId="TEST_SUPPORT_CUST" enabled="Y"/>
+    <UserLoginSecurityGroup userLoginId="support_test_api" groupId="SUPPORT_API_CLIENT"
+                            fromDate="2026-10-20 00:00:00.0"/>
     <SecurityGroupPermission groupId="SUPER" permissionId="PARTYMGR_CME_CREATE"
                              fromDate="2026-10-20 00:00:00.0"/>
 

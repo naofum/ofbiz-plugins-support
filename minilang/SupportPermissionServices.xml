@@ -48,4 +48,30 @@ under the License.
         </if-has-permission>
     </simple-method>
 
+    <simple-method method-name="supportApiPermission" short-description="Support customer API permission">
+        <set field="mainAction" from-field="parameters.mainAction"/>
+        <if-empty field="mainAction">
+            <add-error>
+                <fail-property resource="SupportUiLabels" property="SupportPermissionMainActionAttributeMissing"/>
+            </add-error>
+            <check-errors/>
+        </if-empty>
+        <if-has-permission permission="SUPPORT" action="_ADMIN">
+            <set field="hasPermission" type="Boolean" value="true"/>
+            <field-to-result field="hasPermission"/>
+            <else>
+                <if-has-permission permission="SUPPORT_API" action="_${parameters.mainAction}">
+                    <set field="hasPermission" type="Boolean" value="true"/>
+                    <field-to-result field="hasPermission"/>
+                    <else>
+                        <property-to-field resource="SupportUiLabels" property="SupportPermissionError" field="failMessage"/>
+                        <set field="hasPermission" type="Boolean" value="false"/>
+                        <field-to-result field="hasPermission"/>
+                        <field-to-result field="failMessage"/>
+                    </else>
+                </if-has-permission>
+            </else>
+        </if-has-permission>
+    </simple-method>
+
 </simple-methods>

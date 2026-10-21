@@ -1086,6 +1086,467 @@ public final class SupportCaseServices {
         return result;
     }
 
+    private static GenericValue getSystemUser(Delegator delegator) throws GenericEntityException {
+        return EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").queryOne();
+    }
+
+    private static boolean ownsCase(GenericValue supportCase, String customerPartyId) {
+        return supportCase != null && UtilValidate.isNotEmpty(customerPartyId)
+                && customerPartyId.equals(supportCase.getString("customerPartyId"));
+    }
+
+    private static Map<String, Object> caseSummary(GenericValue supportCase) {
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("supportCaseId", supportCase.getString("supportCaseId"));
+        summary.put("subject", supportCase.getString("subject"));
+        summary.put("description", supportCase.getString("description"));
+        summary.put("statusId", supportCase.getString("statusId"));
+        summary.put("caseTypeEnumId", supportCase.getString("caseTypeEnumId"));
+        summary.put("financeContractId", supportCase.getString("financeContractId"));
+        summary.put("applicationTypeId", supportCase.getString("applicationTypeId"));
+        summary.put("applicationId", supportCase.getString("applicationId"));
+        summary.put("productId", supportCase.getString("productId"));
+        summary.put("openedAt", supportCase.getTimestamp("openedAt"));
+        summary.put("lastMessageAt", supportCase.getTimestamp("lastMessageAt"));
+        summary.put("resolvedAt", supportCase.getTimestamp("resolvedAt"));
+        summary.put("closedAt", supportCase.getTimestamp("closedAt"));
+        summary.put("satisfactionScore", supportCase.get("satisfactionScore"));
+        return summary;
+    }
+
+    public static Map<String, Object> createSupportCaseForCustomer(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        LocalDispatcher dispatcher = dctx.getDispatcher();
+        Locale locale = (Locale) context.get("locale");
+        String customerPartyId = getString(context, "customerPartyId");
+        String subject = getString(context, "subject");
+        if (UtilValidate.isEmpty(customerPartyId) || UtilValidate.isEmpty(subject)) {
+            return ServiceUtil.returnError(message(locale, "SupportApiCustomerAndSubjectRequired"));
+        }
+        try {
+            String externalId = getString(context, "externalId");
+            if (UtilValidate.isNotEmpty(externalId)) {
+                GenericValue existing = EntityQuery.use(delegator).from("SupportCase")
+                        .where("externalId", externalId).queryOne();
+                if (existing != null) {
+                    if (!customerPartyId.equals(existing.getString("customerPartyId"))) {
+                        return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+                    }
+                    Map<String, Object> result = ServiceUtil.returnSuccess();
+                    result.put("supportCaseId", existing.getString("supportCaseId"));
+                    result.put("statusId", existing.getString("statusId"));
+                    result.put("firstResponseDueAt", existing.getTimestamp("firstResponseDueAt"));
+                    result.put("resolutionDueAt", existing.getTimestamp("resolutionDueAt"));
+                    return result;
+                }
+            }
+            Map<String, Object> createContext = new HashMap<>();
+            createContext.put("userLogin", getSystemUser(delegator));
+            createContext.put("customerPartyId", customerPartyId);
+            createContext.put("caseTypeEnumId", getString(context, "caseTypeEnumId"));
+            createContext.put("sourceEnumId", "SUPCSRC_PORTAL");
+            createContext.put("financeContractId", getString(context, "financeContractId"));
+            createContext.put("applicationTypeId", getString(context, "applicationTypeId"));
+            createContext.put("applicationId", getString(context, "applicationId"));
+            createContext.put("productId", getString(context, "productId"));
+            createContext.put("subject", subject);
+            createContext.put("description", getString(context, "description"));
+            createContext.put("externalId", externalId);
+            Map<String, Object> createResult = dispatcher.runSync("createSupportCase", createContext);
+            if (ServiceUtil.isError(createResult)) {
+                return createResult;
+            }
+            String supportCaseId = (String) createResult.get("supportCaseId");
+            GenericValue supportCase = findCase(delegator, supportCaseId);
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("supportCaseId", supportCaseId);
+            result.put("statusId", supportCase.getString("statusId"));
+            result.put("firstResponseDueAt", supportCase.getTimestamp("firstResponseDueAt"));
+            result.put("resolutionDueAt", supportCase.getTimestamp("resolutionDueAt"));
+            return result;
+        } catch (GenericEntityException | GenericServiceException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    public static Map<String, Object> listSupportCasesForCustomer(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        Locale locale = (Locale) context.get("locale");
+        String customerPartyId = getString(context, "customerPartyId");
+        if (UtilValidate.isEmpty(customerPartyId)) {
+            return ServiceUtil.returnError(message(locale, "SupportApiCustomerRequired"));
+        }
+        try {
+            List<EntityCondition> conditions = new ArrayList<>();
+            conditions.add(EntityCondition.makeCondition("customerPartyId", customerPartyId));
+            addEquals(conditions, "financeContractId", getString(context, "financeContractId"));
+            addEquals(conditions, "productId", getString(context, "productId"));
+            Object statusIds = context.get("statusIds");
+            if (statusIds instanceof List && !((List<?>) statusIds).isEmpty()) {
+                conditions.add(EntityCondition.makeCondition("statusId", EntityOperator.IN, statusIds));
+            }
+            List<GenericValue> allCases = EntityQuery.use(delegator).from("SupportCase")
+                    .where(EntityCondition.makeCondition(conditions, EntityOperator.AND))
+                    .orderBy("-openedAt").queryList();
+            int viewIndex = context.get("viewIndex") == null ? 0 : Integer.parseInt(context.get("viewIndex").toString());
+            int viewSize = context.get("viewSize") == null ? 20 : Integer.parseInt(context.get("viewSize").toString());
+            int fromIndex = Math.min(Math.max(viewIndex * viewSize, 0), allCases.size());
+            int toIndex = Math.min(fromIndex + viewSize, allCases.size());
+            List<Map<String, Object>> cases = new ArrayList<>();
+            for (GenericValue supportCase : allCases.subList(fromIndex, toIndex)) {
+                cases.add(caseSummary(supportCase));
+            }
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("supportCases", cases);
+            result.put("caseCount", allCases.size());
+            return result;
+        } catch (GenericEntityException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    public static Map<String, Object> getSupportCaseForCustomer(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        LocalDispatcher dispatcher = dctx.getDispatcher();
+        Locale locale = (Locale) context.get("locale");
+        String supportCaseId = getString(context, "supportCaseId");
+        String customerPartyId = getString(context, "customerPartyId");
+        try {
+            GenericValue supportCase = findCase(delegator, supportCaseId);
+            if (!ownsCase(supportCase, customerPartyId)) {
+                return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+            }
+            Map<String, Object> threadContext = new HashMap<>();
+            threadContext.put("userLogin", getSystemUser(delegator));
+            threadContext.put("supportCaseId", supportCaseId);
+            Map<String, Object> threadResult = dispatcher.runSync("getSupportCaseThread", threadContext);
+            if (ServiceUtil.isError(threadResult)) {
+                return threadResult;
+            }
+            List<Map<String, Object>> visibleMessages = new ArrayList<>();
+            Object thread = threadResult.get("supportCaseThread");
+            if (thread instanceof List) {
+                for (Object item : (List<?>) thread) {
+                    if (item instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> message = (Map<String, Object>) item;
+                        if (!"Y".equals(message.get("isInternal"))) {
+                            visibleMessages.add(message);
+                        }
+                    }
+                }
+            }
+            String statusId = supportCase.getString("statusId");
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("supportCase", caseSummary(supportCase));
+            result.put("messages", visibleMessages);
+            result.put("canReply", !STATUS_CANCELLED.equals(statusId));
+            result.put("canClose", !STATUS_CLOSED.equals(statusId) && !STATUS_CANCELLED.equals(statusId));
+            result.put("canRate", (STATUS_RESOLVED.equals(statusId) || STATUS_CLOSED.equals(statusId))
+                    && supportCase.get("satisfactionScore") == null);
+            return result;
+        } catch (GenericEntityException | GenericServiceException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    public static Map<String, Object> replySupportCaseFromCustomer(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        Locale locale = (Locale) context.get("locale");
+        String supportCaseId = getString(context, "supportCaseId");
+        String customerPartyId = getString(context, "customerPartyId");
+        String content = getString(context, "content");
+        if (UtilValidate.isEmpty(content)) {
+            return ServiceUtil.returnError(message(locale, "SupportApiMessageRequired"));
+        }
+        try {
+            GenericValue supportCase = findCase(delegator, supportCaseId);
+            if (!ownsCase(supportCase, customerPartyId)) {
+                return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+            }
+            if (STATUS_CANCELLED.equals(supportCase.getString("statusId"))) {
+                return ServiceUtil.returnError(message(locale, "SupportInvalidStatusChange"));
+            }
+            String externalId = getString(context, "externalId");
+            if (UtilValidate.isNotEmpty(externalId)) {
+                GenericValue existing = EntityQuery.use(delegator).from("CommunicationEvent")
+                        .where("messageId", externalId).queryOne();
+                if (existing != null) {
+                    GenericValue link = EntityQuery.use(delegator).from("SupportCaseCommEvent")
+                            .where("supportCaseId", supportCaseId,
+                                    "communicationEventId", existing.getString("communicationEventId")).queryOne();
+                    if (link != null) {
+                        Map<String, Object> result = ServiceUtil.returnSuccess();
+                        result.put("communicationEventId", existing.getString("communicationEventId"));
+                        result.put("statusId", supportCase.getString("statusId"));
+                        return result;
+                    }
+                }
+            }
+            GenericValue lastLink = EntityQuery.use(delegator).from("SupportCaseCommEvent")
+                    .where("supportCaseId", supportCaseId).orderBy("-addedDate").queryFirst();
+            GenericValue parentEvent = lastLink == null ? null
+                    : EntityQuery.use(delegator).from("CommunicationEvent")
+                            .where("communicationEventId", lastLink.getString("communicationEventId")).queryOne();
+            String rootEventId = supportCase.getString("rootCommunicationEventId");
+            if (UtilValidate.isEmpty(rootEventId) && parentEvent != null) {
+                rootEventId = parentEvent.getString("origCommEventId");
+                if (UtilValidate.isEmpty(rootEventId)) {
+                    rootEventId = parentEvent.getString("communicationEventId");
+                }
+            }
+            String subject = getString(context, "subject");
+            if (UtilValidate.isEmpty(subject)) {
+                subject = supportCase.getString("subject");
+            }
+            subject = subject == null ? "" : subject;
+            subject = subject.replaceAll("(?i)^\\s*re:\\s*", "").replaceAll("\\[SUP-\\d+\\]\\s*", "");
+            subject = "Re: [SUP-" + supportCaseId + "] " + subject;
+            String supportPartyId = supportCase.getString("assigneePartyId");
+            if (UtilValidate.isEmpty(supportPartyId)) {
+                supportPartyId = UtilProperties.getPropertyValue("support", "support.inbound.partyId", "");
+            }
+            Timestamp now = UtilDateTime.nowTimestamp();
+            GenericValue event = delegator.makeValue("CommunicationEvent");
+            String communicationEventId = delegator.getNextSeqId("CommunicationEvent");
+            event.set("communicationEventId", communicationEventId);
+            event.set("communicationEventTypeId", "WEB_SITE_COMMUNICATI");
+            event.set("statusId", "COM_COMPLETE");
+            event.set("partyIdFrom", customerPartyId);
+            event.set("partyIdTo", UtilValidate.isEmpty(supportPartyId) ? null : supportPartyId);
+            event.set("entryDate", now);
+            event.set("subject", subject);
+            event.set("content", content);
+            event.set("contentMimeTypeId", "text/plain");
+            event.set("messageId", UtilValidate.isEmpty(externalId) ? null : externalId);
+            event.set("parentCommEventId", parentEvent == null ? null : parentEvent.getString("communicationEventId"));
+            event.set("origCommEventId", rootEventId);
+            event.set("roleTypeIdFrom", "_NA_");
+            event.set("roleTypeIdTo", "_NA_");
+            event.create();
+            linkMessage(delegator, supportCase, event, "SUPMSG_IN", false, false, customerPartyId);
+            Map<String, Object> statusContext = new HashMap<>(context);
+            statusContext.put("supportCaseId", supportCaseId);
+            Map<String, Object> statusResult = openCaseIfNeeded(dctx, statusContext, supportCase, "Customer reply");
+            if (ServiceUtil.isError(statusResult)) {
+                return statusResult;
+            }
+            supportCase = findCase(delegator, supportCaseId);
+            supportCase.set("lastMessageAt", now);
+            supportCase.set("lastModifiedDate", now);
+            supportCase.set("lastModifiedByUserLogin", customerPartyId);
+            supportCase.store();
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("communicationEventId", communicationEventId);
+            result.put("statusId", supportCase.getString("statusId"));
+            return result;
+        } catch (GenericEntityException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    public static Map<String, Object> closeSupportCaseByCustomer(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        Locale locale = (Locale) context.get("locale");
+        String supportCaseId = getString(context, "supportCaseId");
+        String customerPartyId = getString(context, "customerPartyId");
+        try {
+            GenericValue supportCase = findCase(delegator, supportCaseId);
+            if (!ownsCase(supportCase, customerPartyId)) {
+                return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+            }
+            String statusId = supportCase.getString("statusId");
+            if (STATUS_CLOSED.equals(statusId) || STATUS_CANCELLED.equals(statusId)) {
+                Map<String, Object> result = ServiceUtil.returnSuccess();
+                result.put("statusId", statusId);
+                return result;
+            }
+            Map<String, Object> statusContext = new HashMap<>(context);
+            statusContext.put("supportCaseId", supportCaseId);
+            statusContext.put("note", getString(context, "reason"));
+            Map<String, Object> statusResult;
+            if (STATUS_RESOLVED.equals(statusId)) {
+                statusResult = changeStatus(dctx, statusContext, STATUS_CLOSED, null, getString(context, "reason"));
+            } else {
+                statusResult = changeStatus(dctx, statusContext, STATUS_CANCELLED, "SUPRES_WITHDRAWN",
+                        getString(context, "reason"));
+            }
+            if (ServiceUtil.isError(statusResult)) {
+                return statusResult;
+            }
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("statusId", findCase(delegator, supportCaseId).getString("statusId"));
+            return result;
+        } catch (GenericEntityException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    public static Map<String, Object> rateSupportCase(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        Locale locale = (Locale) context.get("locale");
+        String supportCaseId = getString(context, "supportCaseId");
+        String customerPartyId = getString(context, "customerPartyId");
+        try {
+            GenericValue supportCase = findCase(delegator, supportCaseId);
+            if (!ownsCase(supportCase, customerPartyId)) {
+                return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+            }
+            String statusId = supportCase.getString("statusId");
+            if (!STATUS_RESOLVED.equals(statusId) && !STATUS_CLOSED.equals(statusId)) {
+                return ServiceUtil.returnError(message(locale, "SupportInvalidStatusChange"));
+            }
+            String scoreValue = getString(context, "satisfactionScore");
+            int score;
+            try {
+                score = Integer.parseInt(scoreValue);
+            } catch (NumberFormatException e) {
+                return ServiceUtil.returnError(message(locale, "SupportApiInvalidScore"));
+            }
+            if (score < 1 || score > 5) {
+                return ServiceUtil.returnError(message(locale, "SupportApiInvalidScore"));
+            }
+            supportCase.set("satisfactionScore", BigDecimal.valueOf(score));
+            supportCase.set("satisfactionComment", getString(context, "satisfactionComment"));
+            supportCase.set("lastModifiedDate", UtilDateTime.nowTimestamp());
+            supportCase.set("lastModifiedByUserLogin", customerPartyId);
+            supportCase.store();
+            return ServiceUtil.returnSuccess();
+        } catch (GenericEntityException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    public static Map<String, Object> getSupportCaseFormOptions(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        Locale locale = (Locale) context.get("locale");
+        String customerPartyId = getString(context, "customerPartyId");
+        if (UtilValidate.isEmpty(customerPartyId)) {
+            return ServiceUtil.returnError(message(locale, "SupportApiCustomerRequired"));
+        }
+        try {
+            List<Map<String, Object>> contracts = new ArrayList<>();
+            List<Map<String, Object>> products = new ArrayList<>();
+            List<String> productIds = new ArrayList<>();
+            List<GenericValue> contractValues = EntityQuery.use(delegator).from("FinanceContract")
+                    .where("customerPartyId", customerPartyId).orderBy("contractDate").queryList();
+            for (GenericValue contract : contractValues) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("financeContractId", contract.getString("financeContractId"));
+                row.put("contractTypeId", contract.getString("contractTypeId"));
+                row.put("productId", contract.getString("productId"));
+                contracts.add(row);
+                String productId = contract.getString("productId");
+                if (UtilValidate.isNotEmpty(productId) && !productIds.contains(productId)) {
+                    productIds.add(productId);
+                    GenericValue product = EntityQuery.use(delegator).from("Product")
+                            .where("productId", productId).queryOne();
+                    Map<String, Object> productRow = new HashMap<>();
+                    productRow.put("productId", productId);
+                    productRow.put("productName", product == null ? productId : product.getString("productName"));
+                    products.add(productRow);
+                }
+            }
+            List<Map<String, Object>> applications = new ArrayList<>();
+            List<GenericValue> loanApplications = EntityQuery.use(delegator).from("LoanApplication")
+                    .where("applicantPartyId", customerPartyId).orderBy("-applicationDate").queryList();
+            for (GenericValue application : loanApplications) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("applicationTypeId", "LOAN");
+                row.put("applicationId", application.getString("loanApplicationId"));
+                row.put("productId", application.getString("productId"));
+                row.put("statusId", application.getString("statusId"));
+                applications.add(row);
+            }
+            List<GenericValue> leaseApplications = EntityQuery.use(delegator).from("LeaseApplication")
+                    .where("applicantPartyId", customerPartyId).orderBy("-applicationDate").queryList();
+            for (GenericValue application : leaseApplications) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("applicationTypeId", "LEASE");
+                row.put("applicationId", application.getString("leaseApplicationId"));
+                row.put("productId", application.getString("productId"));
+                row.put("statusId", application.getString("statusId"));
+                applications.add(row);
+            }
+            List<Map<String, Object>> caseTypes = new ArrayList<>();
+            List<GenericValue> typeValues = EntityQuery.use(delegator).from("Enumeration")
+                    .where("enumTypeId", "SUPPORT_CASE_TYPE").orderBy("sequenceId").queryList();
+            for (GenericValue type : typeValues) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("caseTypeEnumId", type.getString("enumId"));
+                row.put("description", type.getString("description"));
+                caseTypes.add(row);
+            }
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("contracts", contracts);
+            result.put("products", products);
+            result.put("applications", applications);
+            result.put("caseTypes", caseTypes);
+            return result;
+        } catch (GenericEntityException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
+    public static Map<String, Object> uploadSupportAttachment(DispatchContext dctx, Map<String, Object> context) {
+        Delegator delegator = dctx.getDelegator();
+        LocalDispatcher dispatcher = dctx.getDispatcher();
+        Locale locale = (Locale) context.get("locale");
+        String supportCaseId = getString(context, "supportCaseId");
+        String customerPartyId = getString(context, "customerPartyId");
+        String communicationEventId = getString(context, "communicationEventId");
+        try {
+            GenericValue supportCase = findCase(delegator, supportCaseId);
+            if (!ownsCase(supportCase, customerPartyId)) {
+                return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+            }
+            if (UtilValidate.isEmpty(communicationEventId)) {
+                GenericValue lastLink = EntityQuery.use(delegator).from("SupportCaseCommEvent")
+                        .where("supportCaseId", supportCaseId, "isInternal", "N")
+                        .orderBy("-addedDate").queryFirst();
+                if (lastLink == null) {
+                    return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+                }
+                communicationEventId = lastLink.getString("communicationEventId");
+            } else {
+                GenericValue link = EntityQuery.use(delegator).from("SupportCaseCommEvent")
+                        .where("supportCaseId", supportCaseId,
+                                "communicationEventId", communicationEventId).queryOne();
+                if (link == null) {
+                    return ServiceUtil.returnError(message(locale, "SupportCaseNotFound"));
+                }
+            }
+            String fileName = getString(context, "fileName");
+            String contentType = getString(context, "contentType");
+            Map<String, Object> contentContext = new HashMap<>();
+            contentContext.put("userLogin", getSystemUser(delegator));
+            contentContext.put("dataResourceTypeId", "LOCAL_FILE");
+            contentContext.put("dataTemplateTypeId", "NONE");
+            contentContext.put("dataResourceName", UtilValidate.isEmpty(fileName) ? "attachment" : fileName);
+            contentContext.put("mimeTypeId", UtilValidate.isEmpty(contentType) ? "application/octet-stream" : contentType);
+            contentContext.put("contentTypeId", "DOCUMENT");
+            contentContext.put("uploadedFile", context.get("uploadedFile"));
+            contentContext.put("_uploadedFile_fileName", fileName);
+            contentContext.put("_uploadedFile_contentType", contentType);
+            Map<String, Object> contentResult = dispatcher.runSync("createContentFromUploadedFile", contentContext);
+            if (ServiceUtil.isError(contentResult)) {
+                return contentResult;
+            }
+            String contentId = (String) contentResult.get("contentId");
+            GenericValue assoc = delegator.makeValue("CommEventContentAssoc");
+            assoc.set("contentId", contentId);
+            assoc.set("communicationEventId", communicationEventId);
+            assoc.set("fromDate", UtilDateTime.nowTimestamp());
+            assoc.set("sequenceNum", BigDecimal.ONE);
+            assoc.create();
+            Map<String, Object> result = ServiceUtil.returnSuccess();
+            result.put("contentId", contentId);
+            return result;
+        } catch (GenericEntityException | GenericServiceException e) {
+            return ServiceUtil.returnError(e.getMessage());
+        }
+    }
+
     public static Map<String, Object> routeInboundSupportCommunication(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();

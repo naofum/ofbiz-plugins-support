@@ -36,6 +36,14 @@ under the License.
         <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
     </service>
 
+    <service name="supportApiPermission" engine="simple" default-entity-name="SupportCase"
+            location="component://support/minilang/SupportPermissionServices.xml" invoke="supportApiPermission" auth="true">
+        <description>Support customer API permission checking logic</description>
+        <attribute name="mainAction" type="String" mode="IN" optional="false"/>
+        <attribute name="hasPermission" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="failMessage" type="String" mode="OUT" optional="true"/>
+    </service>
+
     <!-- ============================================================= -->
     <!-- Case lifecycle                                                -->
     <!-- ============================================================= -->
@@ -204,6 +212,118 @@ under the License.
             location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="escalateOverdueSupportCases" auth="true">
         <description>Escalate cases whose first response or resolution SLA is overdue.</description>
         <attribute name="escalatedCount" type="Integer" mode="OUT" optional="true"/>
+    </service>
+
+    <!-- ============================================================= -->
+    <!-- STEP S4: customer portal API                                  -->
+    <!-- ============================================================= -->
+    <service name="createSupportCaseForCustomer" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="createSupportCaseForCustomer" auth="true">
+        <description>Create a support case for a customer (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="CREATE"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="caseTypeEnumId" type="String" mode="IN" optional="true"/>
+        <attribute name="financeContractId" type="String" mode="IN" optional="true"/>
+        <attribute name="applicationTypeId" type="String" mode="IN" optional="true"/>
+        <attribute name="applicationId" type="String" mode="IN" optional="true"/>
+        <attribute name="productId" type="String" mode="IN" optional="true"/>
+        <attribute name="subject" type="String" mode="IN" optional="false"/>
+        <attribute name="description" type="String" mode="IN" optional="true"/>
+        <attribute name="externalId" type="String" mode="IN" optional="true"/>
+        <attribute name="supportCaseId" type="String" mode="OUT" optional="true"/>
+        <attribute name="statusId" type="String" mode="OUT" optional="true"/>
+        <attribute name="firstResponseDueAt" type="Timestamp" mode="OUT" optional="true"/>
+        <attribute name="resolutionDueAt" type="Timestamp" mode="OUT" optional="true"/>
+        <override name="subject" allow-html="safe"/>
+        <override name="description" allow-html="safe"/>
+    </service>
+
+    <service name="listSupportCasesForCustomer" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="listSupportCasesForCustomer" auth="true">
+        <description>List the customer's own support cases (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="VIEW"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="statusIds" type="List" mode="IN" optional="true"/>
+        <attribute name="financeContractId" type="String" mode="IN" optional="true"/>
+        <attribute name="productId" type="String" mode="IN" optional="true"/>
+        <attribute name="viewIndex" type="Integer" mode="IN" optional="true"/>
+        <attribute name="viewSize" type="Integer" mode="IN" optional="true"/>
+        <attribute name="supportCases" type="List" mode="OUT" optional="true"/>
+        <attribute name="caseCount" type="Integer" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="getSupportCaseForCustomer" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="getSupportCaseForCustomer" auth="true">
+        <description>Get the customer's own support case with customer-visible messages (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="VIEW"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="supportCase" type="Map" mode="OUT" optional="true"/>
+        <attribute name="messages" type="List" mode="OUT" optional="true"/>
+        <attribute name="canReply" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="canClose" type="Boolean" mode="OUT" optional="true"/>
+        <attribute name="canRate" type="Boolean" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="replySupportCaseFromCustomer" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="replySupportCaseFromCustomer" auth="true">
+        <description>Add a customer message to a support case (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="subject" type="String" mode="IN" optional="true"/>
+        <attribute name="content" type="String" mode="IN" optional="false"/>
+        <attribute name="externalId" type="String" mode="IN" optional="true"/>
+        <attribute name="communicationEventId" type="String" mode="OUT" optional="true"/>
+        <attribute name="statusId" type="String" mode="OUT" optional="true"/>
+        <override name="subject" allow-html="safe"/>
+        <override name="content" allow-html="any"/>
+    </service>
+
+    <service name="closeSupportCaseByCustomer" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="closeSupportCaseByCustomer" auth="true">
+        <description>Close or withdraw the customer's own support case (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="reason" type="String" mode="IN" optional="true"/>
+        <attribute name="statusId" type="String" mode="OUT" optional="true"/>
+        <override name="reason" allow-html="safe"/>
+    </service>
+
+    <service name="rateSupportCase" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="rateSupportCase" auth="true">
+        <description>Rate a resolved support case (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="satisfactionScore" type="String" mode="IN" optional="false"/>
+        <attribute name="satisfactionComment" type="String" mode="IN" optional="true"/>
+        <override name="satisfactionComment" allow-html="safe"/>
+    </service>
+
+    <service name="getSupportCaseFormOptions" engine="java"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="getSupportCaseFormOptions" auth="true">
+        <description>Get the contracts, products, applications and case types for the customer (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="VIEW"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="contracts" type="List" mode="OUT" optional="true"/>
+        <attribute name="products" type="List" mode="OUT" optional="true"/>
+        <attribute name="applications" type="List" mode="OUT" optional="true"/>
+        <attribute name="caseTypes" type="List" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="uploadSupportAttachment" engine="java" default-entity-name="SupportCase"
+            location="org.apache.ofbiz.support.casemgmt.SupportCaseServices" invoke="uploadSupportAttachment" auth="true">
+        <description>Upload an attachment for a customer-visible support message (API).</description>
+        <permission-service service-name="supportApiPermission" main-action="UPDATE"/>
+        <attribute name="supportCaseId" type="String" mode="IN" optional="false"/>
+        <attribute name="customerPartyId" type="String" mode="IN" optional="false"/>
+        <attribute name="communicationEventId" type="String" mode="IN" optional="true"/>
+        <attribute name="fileName" type="String" mode="IN" optional="true"/>
+        <attribute name="contentType" type="String" mode="IN" optional="true"/>
+        <attribute name="uploadedFile" type="java.nio.ByteBuffer" mode="IN" optional="false"/>
+        <attribute name="contentId" type="String" mode="OUT" optional="true"/>
     </service>
 
 </services>

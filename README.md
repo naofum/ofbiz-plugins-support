@@ -4,6 +4,6 @@
 
 - 要件：`REQUIREMENTS_SUPPORT.md`
 - 仕様：`SPEC_SUPPORT.md`
-- 状態：S0（基盤）・S1（ケース管理）・S2（メッセージ・スレッド・自動起票）・S3（自動割当・SLA・エスカレーション）を実装済み。S4 以降は仕様書の STEP を参照。
+- 状態：S0（基盤）・S1（ケース管理）・S2（メッセージ・スレッド・自動起票）・S3（自動割当・SLA・エスカレーション）・S4（顧客 API）を実装済み。S5 以降は仕様書の STEP を参照。
 - 依存：`support → finance`、core（party / workeffort / content / product）。`finance` は `support` を参照しない。
 - 画面：`/support`（スタッフ向け）。顧客向けの画面は持たず、API は efinance から利用する。

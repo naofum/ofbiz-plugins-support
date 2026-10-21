@@ -2,7 +2,7 @@
 
 `REQUIREMENTS_SUPPORT.md` の要件に対する設計。各 STEP の実装後に「実装」「テスト」「検証」を追記する。
 
-> **状態：S0/S1/S2/S3 実装済み、S4 以降は設計（未着手）**。2026-10-20 作成。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
+> **状態：S0/S1/S2/S3/S4 実装済み、S5 以降は設計（未着手）**。2026-10-20 作成。プラグインの実装を始めるまで、本書と `REQUIREMENTS_SUPPORT.md` は `plugins/support/` に置く。実装後も同じ場所を正とする。
 
 ## 進捗
 
@@ -12,7 +12,7 @@
 | S1 | ケース管理（3 章） | 実装済み（2026-10-20） |
 | S2 | メッセージ・スレッド・自動起票（4 章） | 実装済み（2026-10-20） |
 | S3 | 自動割当・SLA・エスカレーション（5 章） | 実装済み（2026-10-20） |
-| S4 | 顧客ポータル API（6 章） | 設計（未着手） |
+| S4 | 顧客ポータル API（6 章） | 実装済み（2026-10-20） |
 | S5 | レポート・分析（7 章） | 設計（未着手） |
 | S6 | 監査・保存・運用・テスト（9〜12 章） | 設計（未着手） |
 
@@ -22,9 +22,10 @@
 - **S1**：`SupportCase` / `SupportCaseStatus` / `SupportCaseCommEvent` / `SupportCaseWorkEffort` / `SupportSla` / `SupportQueue` / `SupportQueueMember` / `SupportQueueProduct` と、作成・更新・割当・状態遷移・照会サービス、スタッフ画面（一覧・詳細・作成・編集）を実装した。
 - **S2**：`addSupportCaseMessage` / `addSupportCaseInternalNote` / `replySupportCase` / `getSupportCaseThread` / `routeInboundSupportCommunication` / `linkOrphanInboundSupportEmails`、受信メールの ECA（`createCommunicationEvent` commit）、件名トークン、自動受付返信、ケース詳細のスレッド表示・返信・内部メモを実装した。
 - **S3**：`SupportQueueProduct` によるキューの決定、`SupportQueueMember` の最少負荷割当、`SupportSla` の選択、`SupportSlaCalculator` による営業時間の期限計算、`support.sla.pauseOnPending` の停止・再開、`escalateOverdueSupportCases` による期限超過の検知・エスカレーション・タスク作成を実装した。
-- **テスト**：`.\gradlew.bat compileJava compileGroovy` 成功。`.\gradlew.bat "ofbiz --load-data readers=seed --load-data component=support"` で seed 68 行を投入。`.\gradlew.bat "ofbiz --test component=support"` は 27 テスト、`errors="0"` / `failures="0"`。
+- **S4**：`createSupportCaseForCustomer` / `listSupportCasesForCustomer` / `getSupportCaseForCustomer` / `replySupportCaseFromCustomer` / `closeSupportCaseByCustomer` / `rateSupportCase` / `getSupportCaseFormOptions` / `uploadSupportAttachment` と `supportApiPermission` を実装した。顧客の所有確認、内部メモの非公開、`externalId` の冪等性、`api/support.rest.xml`（`publish="false"`）を追加した。
+- **テスト**：`.\gradlew.bat compileJava compileGroovy` 成功。`.\gradlew.bat "ofbiz --load-data readers=seed --load-data component=support"` で seed 76 行を投入。`.\gradlew.bat "ofbiz --test component=support"` は 34 テスト、`errors="0"` / `failures="0"`。
 - **画面**：`/support/control/main`、`FindSupportCase`、`EditSupportCase`、`createSupportCase` → `ViewSupportCase`、内部メモ・返信・スレッド表示の描画を確認した。キュー・SLA の値はケース詳細に表示される。
-- **未実装**：S4 以降（顧客 API・レポート・監査/保存）。エスカレーションのメール通知とジョブスケジューラの登録は運用設定で追加する。
+- **未実装**：S5 以降（レポート・監査/保存）。顧客向け REST の公開は efinance の認証完成後。エスカレーションのメール通知とジョブスケジューラの登録は運用設定で追加する。
 
 ---
 
@@ -153,7 +154,7 @@ plugins/support/
 | `SUPPORT_AGENT` | ケースの閲覧・返信・内部メモ・状態変更・タスク作成 |
 | `SUPPORT_MANAGER` | エージェントの権限＋再割当・キュー管理・レポート |
 | `SUPPORT_ADMIN` | すべて＋SLA・設定・権限の管理 |
-| `SUPPORT_API` | 顧客 API 用。efinance のシステムユーザーだけに付与する |
+| `SUPPORT_API` / `SUPPORT_API_VIEW` / `SUPPORT_API_CREATE` / `SUPPORT_API_UPDATE` | 顧客 API 用。efinance のシステムユーザーだけに付与する（グループ `SUPPORT_API_CLIENT`） |
 
 - seed で `FULLADMIN` に `SUPPORT_ADMIN` を付与する。運用用のグループ（例：`SUPPORTAGENT` / `SUPPORTMANAGER`）は demo または運用設定で追加する。
 - Webapp の base-permission は `OFBTOOLS,SUPPORT`。`SUPPORT` は画面の入口、サービスは上記の権限で個別に検査する。
@@ -474,7 +475,7 @@ SUPCS_CANCELLED → （終端）
   - `firstResponseAt` が空 かつ `firstResponseDueAt < now`
   - `resolvedAt` が空 かつ `resolutionDueAt < now`
 - 対象ごとに `escalationLevel` を 1 上げ、`lastEscalatedAt` を設定する。同じレベルで重複通知しない（`lastEscalatedAt` とレベルの組み合わせで判定）。
-- 通知：ケースにエスカレーションの内部メモ（`COMMENT_NOTE`）を作成し、担当者・マネージャ向けの `WorkEffort` タスクを作る。メール通知は S4 以降または運用設定で追加する。
+- 通知：ケースにエスカレーションの内部メモ（`COMMENT_NOTE`）を作成し、担当者・マネージャ向けの `WorkEffort` タスクを作る。メール通知は S5 以降または運用設定で追加する。
 - タスク：契約がある場合は `createFinanceContractTask`（`financeWorkTypeEnumId=FINWE_OTHER`、`triggerKey=supportCaseId:ESC:{level}`）。契約がない場合は core `WorkEffort` を作成し、`SupportCaseWorkEffort` でリンクする。
 - 最大レベルに達したら、`support.escalation.repeatMinutes` の間隔で「要対応」の内部メモとタスクを繰り返す。
 
@@ -495,7 +496,7 @@ SUPCS_CANCELLED → （終端）
 
 - 顧客向けの画面は support に置かない。efinance / 別フロントエンドが REST API を呼ぶ。
 - support は**サービス API**（IN/OUT）を正とし、`api/support.rest.xml` は契約の定義用に置く。既定は `publish="false"`。efinance の W0（会員・認証）ができた時点で、efinance の `api/efinance.rest.xml` から `/efinance/support/...` として公開するか、support の API を有効化する。
-- 顧客の `UserLogin` に finance / support のスタッフ権限を付けない。efinance のシステムユーザー（`SUPPORT_API`）が support のサービスを呼び、顧客の所有確認は efinance の `EfAccessGuard` が行う。
+- 顧客の `UserLogin` に finance / support のスタッフ権限を付けない。efinance のシステムユーザー（`SUPPORT_API_VIEW` / `SUPPORT_API_CREATE` / `SUPPORT_API_UPDATE`）が support のサービスを呼び、顧客の所有確認は efinance の `EfAccessGuard` が行う。
 - support 側でも `customerPartyId` とケースの `customerPartyId` の一致を検証する（IDOR 防止）。法人の権限（`EfCorporateUser`）は efinance が判定し、support は受け取った `customerPartyId` を信頼しすぎない。
 - 手続き依頼（`EfServiceRequest`）との連携は efinance 側で `supportCaseId` を持たせる。support は `SupportCase.externalId` に efinance のリクエスト ID を保持でき、相互参照できる。
 
@@ -506,15 +507,15 @@ SUPCS_CANCELLED → （終端）
 | `createSupportCaseForCustomer` | `customerPartyId`、`caseTypeEnumId`、`financeContractId`、`applicationTypeId`、`applicationId`、`productId`、`subject`、`description`、`externalId` | `supportCaseId`、`statusId`、`firstResponseDueAt`、`resolutionDueAt` |
 | `listSupportCasesForCustomer` | `customerPartyId`、`statusIds`、`financeContractId`、`productId`、`viewIndex`、`viewSize` | 一覧、件数 |
 | `getSupportCaseForCustomer` | `supportCaseId`、`customerPartyId` | ケース（顧客向け項目）、メッセージ（`isInternal=N`）、操作可否 |
-| `replySupportCaseFromCustomer` | `supportCaseId`、`customerPartyId`、`subject`、`content`、`attachmentContentIds`、`externalId` | `communicationEventId`、`statusId` |
+| `replySupportCaseFromCustomer` | `supportCaseId`、`customerPartyId`、`subject`、`content`、`externalId` | `communicationEventId`、`statusId` |
 | `closeSupportCaseByCustomer` | `supportCaseId`、`customerPartyId`、`reason` | `statusId` |
 | `rateSupportCase` | `supportCaseId`、`customerPartyId`、`satisfactionScore`、`satisfactionComment` | — |
 | `getSupportCaseFormOptions` | `customerPartyId` | 契約・申込・商品・種別の選択肢 |
-| `uploadSupportAttachment` | `customerPartyId`、`supportCaseId`、`fileName`、`contentType`、`uploadedFile` | `contentId` |
+| `uploadSupportAttachment` | `customerPartyId`、`supportCaseId`、`communicationEventId`（任意）、`fileName`、`contentType`、`uploadedFile` | `contentId` |
 
-- 顧客の返信は `CommunicationEvent`（`WEB_SITE_COMMUNICATI` または `EMAIL_COMMUNICATION`）として記録し、`SupportCaseCommEvent` に `SUPMSG_IN` でリンクする。メール通知は担当者へ送る。
+- 顧客の返信は `CommunicationEvent`（`WEB_SITE_COMMUNICATI`）として記録し、`SupportCaseCommEvent` に `SUPMSG_IN` でリンクする。担当者へのメール通知は S5 以降または運用設定で追加する。
 - 顧客は優先度・担当・キューを指定できない。support が既定値（通常）と SLA・ルーティングで設定する。
-- 顧客のクローズは、状態が `SUPCS_RESOLVED` なら `SUPCS_CLOSED`、それ以外（`SUPCS_NEW` / `SUPCS_OPEN` / `SUPCS_PENDING`）なら取り下げとして `SUPCS_CANCELLED` にし、`resolutionEnumId = SUPRES_WITHDRAWN` を設定する。担当者へ通知する。
+- 顧客のクローズは、状態が `SUPCS_RESOLVED` なら `SUPCS_CLOSED`、それ以外（`SUPCS_NEW` / `SUPCS_OPEN` / `SUPCS_PENDING`）なら取り下げとして `SUPCS_CANCELLED` にし、`resolutionEnumId = SUPRES_WITHDRAWN` を設定する。担当者への通知は S5 以降または運用設定で追加する。
 - `externalId` は冪等キー。同じ `externalId` の作成・返信は既存の結果を返す。
 
 ### 6.3 REST の契約
@@ -619,7 +620,7 @@ SUPCS_CANCELLED → （終端）
 ### 9.1 権限
 
 - スタッフ：`SUPPORT_AGENT` / `SUPPORT_MANAGER` / `SUPPORT_ADMIN`。
-- 顧客 API：`SUPPORT_API`（efinance のシステムユーザー）。顧客の `UserLogin` には付けない。
+- 顧客 API：`SUPPORT_API_VIEW` / `SUPPORT_API_CREATE` / `SUPPORT_API_UPDATE`（グループ `SUPPORT_API_CLIENT`、efinance のシステムユーザー）。顧客の `UserLogin` には付けない。
 - サービスは `auth="true"` とし、`permission-service` または先頭の権限検査で守る。
 - 顧客の所有確認は efinance の `EfAccessGuard` と support の `customerPartyId` 検証の二重で行う。
 
