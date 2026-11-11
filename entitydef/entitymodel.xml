@@ -87,7 +87,7 @@ under the License.
         <relation type="one" fk-name="SUPCASE_QUEUE" rel-entity-name="SupportQueue">
             <key-map field-name="queueId" rel-field-name="queueId"/>
         </relation>
-        <relation type="one" fk-name="SUPCASE_ASGN" rel-entity-name="Party">
+        <relation type="one" fk-name="SUPCASE_ASGN" title="Assignee" rel-entity-name="Party">
             <key-map field-name="assigneePartyId" rel-field-name="partyId"/>
         </relation>
         <relation type="one" fk-name="SUPCASE_SLA" rel-entity-name="SupportSla">
@@ -99,10 +99,10 @@ under the License.
         <relation type="one" fk-name="SUPCASE_TYPE" rel-entity-name="Enumeration">
             <key-map field-name="caseTypeEnumId" rel-field-name="enumId"/>
         </relation>
-        <relation type="one" fk-name="SUPCASE_SRC" rel-entity-name="Enumeration">
+        <relation type="one" fk-name="SUPCASE_SRC" title="Source" rel-entity-name="Enumeration">
             <key-map field-name="sourceEnumId" rel-field-name="enumId"/>
         </relation>
-        <relation type="one" fk-name="SUPCASE_RES" rel-entity-name="Enumeration">
+        <relation type="one" fk-name="SUPCASE_RES" title="Resolution" rel-entity-name="Enumeration">
             <key-map field-name="resolutionEnumId" rel-field-name="enumId"/>
         </relation>
         <relation type="one" fk-name="SUPCASE_ROOTCM" rel-entity-name="CommunicationEvent">

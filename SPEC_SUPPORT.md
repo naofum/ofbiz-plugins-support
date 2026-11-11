@@ -724,3 +724,4 @@ SUPCS_CANCELLED → （終端）
 |------|------|
 | 2026-10-20 | 初版（要件・仕様の設計）。`plugins/support` 新設、`support → finance`、顧客ポータルは API まで、`EfServiceRequest` とは分離、という方針を確定 |
 | 2026-10-21 | S6 実装。`SupportAuditLog`、論理削除・保存期間・匿名化、マスク、添付アクセス、監査／キュー／SLA 画面、ジョブ seed を追加。42 テスト成功（seed 111 行） |
+| 2026-11-11（起動時警告） | `SupportCase` の Party relation 2つ（顧客・担当者）のうち担当者に `title="Assignee"`、Enumeration relation 3つ（種類・発生源・解決）のうち発生源に `title="Source"`、解決に `title="Resolution"` を追加。起動ログの support 警告を解消。 |
